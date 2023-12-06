@@ -1,0 +1,332 @@
+---
+title: "\\vspace{-1.5cm}{WGS Quality Control Report}"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+    keep_tex: true
+mainfont: Helvetica
+papersize: a4
+header-includes:
+- \usepackage{titling}
+- \pretitle{\begin{flushleft}}
+- \posttitle{\end{flushleft}} 
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+- \usepackage{soul}
+- \usepackage{caption}
+- \usepackage[singlelinecheck=false]{caption}
+- \usepackage[font={footnotesize,it}]{caption}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load library, echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(knitr)
+library(readxl)
+library(dplyr)
+library(kableExtra)
+```
+
+```{r call data, echo=FALSE, message=FALSE, warning=FALSE}
+setwd("D:/ALLYSA FILE/2023/DMU Files/DMU Projects/WGS_QC")
+wgs_df <- read.csv("data_files/qualifyr_report_2023-08-09.csv")
+```
+
+
+```{r rename columns, echo=FALSE, message=FALSE, warning=FALSE}
+wgs_df <- wgs_df %>% 
+  rename(
+    sample_id = sample_name,
+    wgs_id = bactinspector.species.metric_value,
+    check_result = bactinspector.result.check_result,
+    contamination_value = confindr.percentage_contamination.metric_value,
+    contamination_result =confindr.percentage_contamination.check_result,
+    no_of_contigs_value = quast...contigs.....1000.bp..metric_value,
+    no_of_contigs_result = quast...contigs.....1000.bp..check_result,
+    gc_percent_value = quast.GC.....metric_value,
+    gc_percent_result = quast.GC.....check_result,
+    n50_value = quast.N50.metric_value,
+    n50_result = quast.N50.check_result,
+    total_length_value = quast.Total.length.....1000.bp..metric_value,
+    total_length_result = quast.Total.length.....1000.bp..check_result
+    )
+
+#write.csv(wgs_df, file="wgs_qc_data.csv")
+```
+
+
+```{r code organism names, echo=FALSE, message=FALSE, warning=FALSE}
+org_df <- read_xlsx("data_files/ORGLIST.xlsx")
+org_df <- subset(org_df, select = c(ORG,ORGANISM))
+
+result_df <- org_df %>% 
+  right_join(wgs_df, by= c('ORGANISM' = 'wgs_id'))
+
+result_df <- subset(result_df, select = c('ORG', 'sample_id'))
+wgs_df <- merge(x=wgs_df,y=result_df, by="sample_id", all.x=TRUE)
+
+wgs_df$ORG[grepl("Salmonella",wgs_df$wgs_id)] = "sal"
+wgs_df$ORG[grepl("Shigella",wgs_df$wgs_id)] = "shi"
+wgs_df$ORG[grepl("Vibrio",wgs_df$wgs_id)] = "vic"
+
+wgs_df$warning_count <- ifelse(wgs_df$check_result == 'WARNING',1,0)
+
+#write.csv(wgs_df, file="wgs_qc_data.csv")
+```
+
+
+\fontsize{7}{8}
+\selectfont
+\captionsetup[table]{labelformat=empty}
+\renewcommand{\arraystretch}{1.2}
+
+```{r qc listing, echo=FALSE, message=FALSE, warning=FALSE}
+arsrl_result_df <- read.csv("data_files/arsrl_result_2023-08-09.csv")
+
+retain_column <- c('sample_id','wgs_id')
+wgs_result_df <- subset(wgs_df, select = retain_column)
+
+qc_listing_df <- merge(x=arsrl_result_df,y=wgs_result_df, by="sample_id", all.x=TRUE)
+
+qc_listing_nc <- qc_listing_df %>%
+  rowwise() %>%
+  mutate(concordant = 
+           grepl(arsrl_result, wgs_id)
+         )
+
+warning_color <- which(wgs_df$result == 'WARNING')
+nc_warning <- ifelse(qc_listing_nc$concordant == TRUE, "white","#ffcbd1")
+
+colnames(qc_listing_df) <- c('Sample ID','ARSRL','WGS') 
+
+qc_listing_df %>% 
+  mutate(WGS = cell_spec(WGS, background = nc_warning)) %>%
+  kable(booktabs = T, align = "c", escape = FALSE)%>%
+  column_spec(1, width = "2cm") %>%
+  column_spec(2, width = "5cm") %>%
+  column_spec(3, width = "7cm") %>%
+  row_spec(warning_color, background = "#F9E4BC")%>%
+  row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c")
+
+```
+
+\tiny Legend:
+```{r qc listing legend, echo=FALSE, message=FALSE, warning=FALSE,results='asis'}
+lgd1 <- c("PASS")
+lgd2 <- c("WARNING")
+lgd3 <- c("EXCEEDS THRESHOLD METRIC/S")
+lgd4 <- c("NON-CONCORDANT")
+  
+legend_tbl <- data.frame(lgd1,lgd2,lgd3,lgd4)
+
+legend_tbl[1,1] = cell_spec(legend_tbl[1,1],font_size = 4)
+legend_tbl[1,2] = cell_spec(legend_tbl[1,2],font_size = 4)
+legend_tbl[1,3] = cell_spec(legend_tbl[1,3],font_size = 4)
+legend_tbl[1,4] = cell_spec(legend_tbl[1,4],font_size = 4)
+
+
+legend_tbl %>%
+  kable(booktabs = T, align = "c", escape = FALSE, col.names = NULL) %>%
+  column_spec(1, width = "1cm",border_left = TRUE,background = "white")%>%
+  column_spec(2, width = "1cm",border_left = TRUE, background = "#F9E4BC")%>%
+  column_spec(3, width = "3cm",border_left = TRUE,color = "red")%>%
+  column_spec(4, width = "3cm",background = "#ffcbd1",border_left = TRUE, border_right =  TRUE)
+
+#write.csv(wgs_df, file="wgs_qc_data.csv")
+```
+
+$\\$
+
+\fontsize{7}{8}
+\selectfont
+\captionsetup[table]{labelformat=empty}
+\renewcommand{\arraystretch}{1.2}
+```{r summary table, echo=FALSE, message=FALSE, warning=FALSE}
+retain_column <- c('sample_id','contamination_value','no_of_contigs_value','gc_percent_value','n50_value','total_length_value')
+wgs_summary_df <- subset(wgs_df, select = retain_column)
+
+wgs_summary_df$sample_id <- ifelse(wgs_df$warning_count == 1,paste("*",wgs_df$sample_id),wgs_df$sample_id)
+warning_color <- which(wgs_df$result == 'WARNING')
+contigs_warning <- ifelse(wgs_df$no_of_contigs_result == 'WARNING', "red","black")
+n50_warning <- ifelse(wgs_df$n50_result == 'WARNING', "red","black")
+
+colnames(wgs_summary_df) <- c('SAMPLE ID','CONTAMINATION','CONTIGS', 'GC PERCENT','N50','TOTAL LENGTH') 
+
+wgs_summary_df %>% 
+  mutate(N50 = cell_spec(N50, color = n50_warning)) %>%
+  mutate(CONTIGS = cell_spec(CONTIGS, color = contigs_warning)) %>%
+  kable(booktabs = T, align = "c", escape = FALSE) %>%
+  column_spec(1, width = "3cm") %>%
+  column_spec(2, width = "2cm") %>%
+  column_spec(3, width = "3cm") %>%
+  column_spec(4, width = "2cm") %>%
+  column_spec(5, width = "2cm") %>%
+  column_spec(6, width = "2cm") %>%
+  row_spec(warning_color, background = "#F9E4BC") %>%
+  row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c")
+
+#write.csv(wgs_df, file="wgs_qc_data.csv")
+```
+
+
+\tiny Legend:
+```{r summary table legend, echo=FALSE, message=FALSE, warning=FALSE,results='asis'}
+lgd1 <- c("PASS")
+lgd2 <- c("WARNING")
+lgd3 <- c("EXCEEDS THRESHOLD METRIC/S")
+lgd4 <- c("*Isolates were tagged with warning due to uncertain results of species identification using bactinspector")
+  
+legend_tbl <- data.frame(lgd1,lgd2,lgd3,lgd4)
+
+legend_tbl[1,1] = cell_spec(legend_tbl[1,1],font_size = 4)
+legend_tbl[1,2] = cell_spec(legend_tbl[1,2],font_size = 4)
+legend_tbl[1,3] = cell_spec(legend_tbl[1,3],font_size = 4)
+legend_tbl[1,4] = cell_spec(legend_tbl[1,4],font_size = 4)
+
+
+legend_tbl %>%
+  kable(booktabs = T, align = "c", escape = FALSE, col.names = NULL) %>%
+  column_spec(1, width = "1cm",border_left = TRUE,background = "white")%>%
+  column_spec(2, width = "1cm",border_left = TRUE, background = "#F9E4BC")%>%
+  column_spec(3, width = "2.5cm",border_left = TRUE,color = "red")%>%
+  column_spec(4, width = "6.5cm",border_left = TRUE, border_right =  TRUE)
+
+#write.csv(wgs_df, file="wgs_qc_data.csv")
+```
+
+\fontsize{7}{8}
+\selectfont
+\captionsetup[table]{labelformat=empty}
+\renewcommand{\arraystretch}{1.2}
+
+
+```{r qc listing summary narrative, echo=FALSE, message=FALSE, warning=FALSE}
+qc_summary_df <- qc_listing_df %>% group_by(WGS) %>% summarise(number = sum(!is.na(WGS)))
+qc_summary_df <- qc_summary_df[order(-qc_summary_df$number),]
+
+qc_tl <- nrow(qc_listing_df)
+qc_distinct <- nrow(qc_summary_df)
+
+qc_pass <- nrow(wgs_df[wgs_df$result == 'PASS', ])
+qc_warning <- nrow(wgs_df[wgs_df$result == 'WARNING', ])
+
+qc_pass_pc <- if (qc_pass != 0) (qc_pass/qc_tl) * 100 else 0
+qc_pass_pc <- format(round(qc_pass_pc, 2), nsmall = 2)
+
+qc_warning_pc <- if (qc_warning != 0) (qc_warning/qc_tl) * 100 else 0
+qc_warning_pc <- format(round(qc_warning_pc, 2), nsmall = 2)
+
+qc_concordance <- nrow(qc_listing_nc[qc_listing_nc$concordant == TRUE, ])
+qc_cn_pc <- if (qc_concordance != 0) (qc_concordance/qc_tl) * 100 else 0
+qc_cn_pc <- format(round(qc_cn_pc, 2), nsmall = 2)
+
+```
+
+$\\$
+$\\$
+
+```{r qc listing summary table, echo=FALSE, message=FALSE, warning=FALSE}
+colnames(qc_summary_df) <- c('WGS_ID','Number')
+
+qc_summary_df %>% 
+  kable(booktabs = T, align = "lc")%>%
+  column_spec(1, width = "8cm") %>%
+  row_spec(0, background = "#D4D4D4",bold = TRUE)
+
+```
+* $\color{red}`r qc_distinct`$ distinct species were identified among $\color{red}`r qc_tl`$
+isolates.
+
+* $\color{red}`r qc_pass_pc`$ % of the isolates passed the QC, while $\color{red}`r qc_warning_pc`$ % were tagged with warning.
+
+
+* Concordance between ARSRL and WGS species report was $\color{red}`r qc_cn_pc`$ %.
+
+
+$\\$
+
+### GRAPHS
+
+\fontsize{7}{8}
+\selectfont
+\captionsetup[table]{labelformat=empty}
+\renewcommand{\arraystretch}{1.2}
+
+
+```{r organism summary, echo=FALSE, message=FALSE, warning=FALSE}
+# Calculate the counts for each "wgs_id"
+wgs_id_count <- table(wgs_df$wgs_id)
+
+# Create a data frame with "wgs_id" and their counts
+wgs_count_df <- data.frame(wgs_id = names(wgs_id_count), Number = as.vector(wgs_id_count))
+
+# Sort the data frame by the "Number" column in descending order
+wgs_count_df <- wgs_count_df[order(-wgs_count_df$Number),]
+
+# Now, set the factor levels in reverse order for correct sorting
+wgs_count_df$wgs_id <- factor(wgs_count_df$wgs_id, levels = rev(wgs_count_df$wgs_id))
+
+# Create the bar plot using ggplot with labels
+ggplot(data = wgs_count_df) +
+  geom_bar(mapping = aes(x = wgs_id, y = Number), stat = "identity", width = 0.5, position = position_dodge(width = 1),fill="lightblue") +  
+  coord_flip() +
+  geom_text(aes(x = wgs_id, y = Number, label = Number), hjust = -0.1, size = 4, color = "black") +
+  labs(y = "Number")+
+  theme(text = element_text(size=8))
+
+
+```
+
+
+### Result Classification
+```{r organism results, echo=FALSE, message=FALSE, warning=FALSE}
+# Define the desired order for the 'result' levels
+desired_order <- c("PASS", "WARNING", "FAILURE")
+wgs_df$result <- factor(wgs_df$result, levels = desired_order)
+
+result_colors <- c("FAILURE" = "red", "PASS" = "green", "WARNING" = "purple")
+
+ggplot(data = wgs_df, aes(x = ORG, fill = result)) +
+  geom_bar() +
+  facet_wrap(~ result) +
+  coord_flip() +
+  scale_fill_manual(values = result_colors) + # Apply the defined colors
+  guides(fill = FALSE) #+  # Hide the legend for the 'result' variable
+  #theme_minimal()
+```
+
+
+### Number of contigs
+```{r ,echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(data = wgs_df) +
+  geom_point(mapping = aes(x = no_of_contigs_value, y = ORG, color = ifelse(no_of_contigs_value < 301, "blue", "red"))) +
+  scale_color_manual(values = c("blue", "red"), labels = c("Passed", "Above threshold")) +
+  labs(color = "Contigs") +
+  theme_minimal()
+```
+
+
+
+### List of samples above QC threshold metrics
+```{r QC failed list,echo=FALSE, message=FALSE, warning=FALSE}
+QC_failed <- wgs_df %>%
+  filter(result == "FAILURE") %>%
+  select(sample_id,  result, contamination_result, no_of_contigs_value, n50_value, total_length_value)
+
+if (nrow(QC_failed) > 0) {
+  kable(QC_failed)
+} else {
+  cat("No QC failures found.")
+}
+```
