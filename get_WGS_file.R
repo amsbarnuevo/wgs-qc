@@ -12,7 +12,7 @@ library(xlsx)
 library(writexl)
 
 
-setwd("D:/ALLYSA FILE/2024/DMU Projects/WGS_QC")
+setwd("D:/ALLYSA FILE/2024/DMU Projects/wgs-qc")
 
 #Get the WGS QC File
 get_batchname <- dlgInput("Enter batch number:", Sys.info()[" "])$res
@@ -90,6 +90,8 @@ result <- dbFetch(df)
 result <- result %>% mutate_all(as.character)
 result <- result %>% mutate_all(~as.character(ifelse(. == "nan", "", .)))
 
+#result <- read_xlsx("data_files/result.xlsx")
+
 #Check if UTP sample is present in the id list
 utp_sample <- grep("UTP", wgs_df[['sample_id']], value = TRUE)
 utp_sample_count <- length(utp_sample)
@@ -112,7 +114,7 @@ if(utp_sample_count !=0){
 }
 
 
-
+#wgs_df <- read_xlsx("wgs_df_2024-05-03.xlsx")
 
 if(nrow(wgs_df) != 0){
   rmarkdown::render("wgs_qc_report_ver5.Rmd",
