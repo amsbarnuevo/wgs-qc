@@ -24,6 +24,14 @@ wgs_df <- read.delim(file= get_file)
 wgs_df$sample_name <- gsub("-", "_", wgs_df$sample_name, fixed=TRUE)
 
 
+#get MLST and AMR Genes tsv files
+get_mlst <- paste("data_files/mlst.tsv")
+mlst_df <- read.delim(file= get_mlst)
+
+get_genes <- paste("data_files/amrfinderplus-genes.tsv")
+AMR_df <- read.delim(file= get_genes)
+
+
 # Define a function to remove the second underscore if the string doesn't contain the specific text
 remove_second_underscore <- function(x) {
   if (!grepl('UTP', x)) {
