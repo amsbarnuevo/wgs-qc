@@ -545,3 +545,87 @@ reco_table %>%
 
 ```
 
+$\\$
+
+### MLST AND AMR GENE RESULTS:
+```{r mlst_df ,echo=FALSE, message=FALSE, warning=FALSE}
+#Remain Data column
+mlst_df_clean <- mlst_df %>%
+  rename("sample_id" = 1,
+         "species" = 2,
+         "MLST" = 3)
+
+#drop row without species
+mlst_df_clean <- subset(mlst_df_clean, mlst_df_clean$species != '-')
+
+#extract text before the first period in sample_id column
+mlst_df_clean$sample_id <- sub("\\..*", "", mlst_df_clean$sample_id)
+
+#change "-" to "_" in sample_id column
+mlst_df_clean$sample_id <- gsub("-", "_", mlst_df_clean$sample_id, fixed=TRUE)
+
+#merge wgs_id from wgs_df to mlst_df to set as species value
+wgs_species <- subset(wgs_df, , select = c("sample_id", "wgs_id"))
+mlst_df_clean <- merge(mlst_df_clean,wgs_species,by = "sample_id")
+
+#reorder column
+mlst_df_clean <- mlst_df_clean %>% 
+  relocate(wgs_id, .after = species)
+
+
+#list unique species in the dataframe
+species_list <- unique(mlst_df_clean$species)
+
+mlst_df_list = c()
+
+#create multiple dataframe for each species
+for(i in species_list) {
+  #retain first three columns
+  mlst_info_df <- subset(mlst_df_clean, select = 1:4)
+  
+  #remove first three columns
+  mlst_result_df <- subset(mlst_df_clean, , select = -c(1, 2, 3,4))
+
+
+  #use first row data as column names in r
+  colnames(mlst_result_df)=mlst_result_df[c(1),]
+
+  #remove special characters and number from column header
+  colnames(mlst_result_df) <- gsub("\\s*\\(.*", "", colnames(mlst_result_df))
+
+
+  # Apply gsub to get text inside the parenthesis
+  mlst_result_df <- apply(mlst_result_df, 2, function(x) gsub("\\(([^()]*)\\)|.", "\\1", x, perl=T))
+
+  # Convert back to data frame
+  mlst_result_df <- as.data.frame(mlst_result_df)
+
+  #combine the two dataframe
+  mlst_result_df <- cbind(mlst_info_df,mlst_result_df)
+  
+  #assign new name to dataframe
+  nam <- paste("df", i, sep = "_")
+  assign(nam, mlst_result_df[mlst_result_df$species==i,])
+  
+  mlst_df_list <- c(mlst_df_list, nam)
+}
+
+```
+
+
+```{r mlst_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+
+#map(df.list, ~.x |>  mutate(across(everything(), ~cell_spec(., "latex", background = ifelse(.x==1,  "red","white"), color = ifelse(.x==1, "red","white")))) |>  
+      #kbl(escape = FALSE,
+            #booktabs = TRUE))
+
+```
+
+
+
+
+
+
+
+
+

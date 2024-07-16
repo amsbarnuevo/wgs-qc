@@ -76,7 +76,7 @@ id_list <- gsub("\\_", "_", id_list)
 
 # Connect to db
 con <- dbConnect(RPostgres::Postgres(),dbname = 'WGS_DB', 
-                 host = '10.10.25.163', # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
+                 host = '10.10.24.163', # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
                  port = 5432, # or any other port specified by your DBA
                  user = 'postgres',
                  password = 'secret123')
@@ -125,7 +125,7 @@ if(utp_sample_count !=0){
 #wgs_df <- read_xlsx("wgs_df_2024-05-03.xlsx")
 
 if(nrow(wgs_df) != 0){
-  rmarkdown::render("wgs_qc_report_ver5.Rmd",
+  rmarkdown::render("wgs_qc_report_ver6.Rmd",
                     output_file = paste("qualifyr_report_",get_batchname, '.pdf', sep='')
   ) 
 }else{
