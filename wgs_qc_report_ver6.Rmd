@@ -633,10 +633,32 @@ for(i in mlst_df_list) {
   cat("\\vspace{1em}")
 }
 
-  
-
 ```
 
+
+
+
+```{r amr_genes ,echo=FALSE, message=FALSE, warning=FALSE}
+for(i in mlst_df_list) {
+  df <- get(i)
+  
+  sample_id <- c(df$sample_id)
+
+  #change "-" to "_" in sample_id column
+  AMR_df$Name <- gsub("-", "_", AMR_df$Name, fixed=TRUE)
+  
+  #assign new name to dataframe
+  nam <- paste("amr", i, sep = "_")
+  assign(nam, AMR_df[AMR_df$Name %in% sample_id, ])
+
+}
+
+
+  
+df_AMR_sample <- subset(amr_df_abaumannii_2, select = c(Name, Gene.symbol,Element.type,Class))
+df_AMR_sample$Newcols <- paste(df_AMR_sample$Element.type, df_AMR_sample$Class, sep = " ")
+  
+```
 
 
 
