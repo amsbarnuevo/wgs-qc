@@ -610,14 +610,30 @@ for(i in species_list) {
   mlst_df_list <- c(mlst_df_list, nam)
 }
 
+
 ```
 
 
 ```{r mlst_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+for(i in mlst_df_list) {
+  df <- get(i)
+  df <- subset(df, select = -c(species) )
+  names(df)[names(df) == 'wgs_id'] <- 'species'
+  
+  
+  #kable(df,  "latex", booktabs = T, align = "c") %>%
+    #kable_styling(position = "left") %>%
+    #row_spec(0, background = "#D4D4D4",bold = TRUE)
+  
+  print(df %>% 
+    kable(booktabs = T, align = "c", row.names = FALSE)%>%
+    kable_styling(position = "left") %>%
+    row_spec(0, background = "#D4D4D4",bold = TRUE))
 
-#map(df.list, ~.x |>  mutate(across(everything(), ~cell_spec(., "latex", background = ifelse(.x==1,  "red","white"), color = ifelse(.x==1, "red","white")))) |>  
-      #kbl(escape = FALSE,
-            #booktabs = TRUE))
+  cat("\\vspace{1em}")
+}
+
+  
 
 ```
 

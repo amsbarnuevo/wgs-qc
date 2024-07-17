@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  16 JUL 2024 17:34
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  17 JUL 2024 16:05
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1608,6 +1608,11 @@ Underfull \hbox (badness 10000) in paragraph at lines 300--301
  []
 
 
+Overfull \hbox (29.48946pt too wide) in alignment at lines 305--311
+[] [] [] [] [] [] [] [] [] [] 
+ []
+
+
 Package caption Warning: Unused \captionsetup[table] on input line 111.
 See the caption package documentation for explanation.
 
@@ -1618,10 +1623,10 @@ L3 programming layer <2023-11-09>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 21855 strings out of 409717
- 394731 string characters out of 5774923
+ 21860 strings out of 409717
+ 394758 string characters out of 5774923
  2005189 words of memory out of 5000000
- 43553 multiletter control sequences out of 15000+600000
+ 43558 multiletter control sequences out of 15000+600000
  566999 words of font info for 111 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  90i,9n,122p,1025b,447s stack positions out of 10000i,1000n,20000p,200000b,200000s
