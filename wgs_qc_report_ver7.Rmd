@@ -553,8 +553,10 @@ reco_table %>%
 ```
 
 
+
 \newpage
 \blandscape
+
 
 ### MLST RESULTS:
 ```{r mlst_df ,echo=FALSE, message=FALSE, warning=FALSE}
@@ -647,7 +649,7 @@ for(i in mlst_df_list) {
 
 ```
 
-
+$\\$
 $\\$
 
 ### AMR PREDICTION RESULTS:
@@ -722,11 +724,16 @@ for(i in amr_gene_df_list) {
   
 
   df <- df[,colSums(is.na(df))<nrow(df)]
+  
+  amr_gene_table <- knitr::kable(df,format='latex',booktabs = T)%>%
+    kable_styling(latex_options = c("hold_position", "scale_down")) %>%
+    row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
+    column_spec(2:ncol(df), width = "3cm")
 
   
-  amr_gene_table <- kable(df,align = "c") %>%
-    kable_styling(latex_options = c("hold_position","scale_down"), position = "left") %>%
-    row_spec(0, background = "#D4D4D4",bold = TRUE)
+  #amr_gene_table <- kable(df,align = "c") %>%
+    #kable_styling(latex_options = c("hold_position","scale_down"), position = "left") %>%
+    #row_spec(0, background = "#D4D4D4",bold = TRUE)
 
       
   print(amr_gene_table)
@@ -736,32 +743,6 @@ for(i in amr_gene_df_list) {
 
 }
 
-
-```
-
-
-```{r amr_genes_table2 ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
-df <- amr_df_klebsiella
-  
-  #merge wgs_id from wgs_df to mlst_df to set as species value
-  df <- merge(df,wgs_species,by = "sample_id")
-  
-  #col_num <- ncol(df)
-
-  #Change wgs_id to species
-  names(df)[names(df) == 'wgs_id'] <- 'species'
-  
-  #reorder column
-  df <- df %>%
-    relocate(species, .after = sample_id)
-  
-
-  df <- df[,colSums(is.na(df))<nrow(df)]
-
-   
-knitr::kable(df,format='latex',booktabs = T)%>%
-  kable_styling(latex_options = c("hold_position", "scale_down")) %>%
-  column_spec(2:ncol(df), width = "3cm")
 
 ```
 
