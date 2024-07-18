@@ -547,7 +547,7 @@ reco_table %>%
 
 $\\$
 
-### MLST AND AMR GENE RESULTS:
+### MLST RESULTS:
 ```{r mlst_df ,echo=FALSE, message=FALSE, warning=FALSE}
 #Remain Data column
 mlst_df_clean <- mlst_df %>%
@@ -629,38 +629,97 @@ for(i in mlst_df_list) {
     kable(booktabs = T, align = "c", row.names = FALSE)%>%
     kable_styling(position = "left") %>%
     row_spec(0, background = "#D4D4D4",bold = TRUE))
-
+  
   cat("\\vspace{1em}")
+
 }
 
 ```
 
 
+$\\$
 
+### AMR PREDICTION RESULTS:
 
 ```{r amr_genes ,echo=FALSE, message=FALSE, warning=FALSE}
+
+#Change Name to sample_id
+names(AMR_df)[names(AMR_df) == 'Name'] <- 'sample_id'
+
+#change "-" to "_" in sample_id column
+AMR_df$sample_id <- gsub("-", "_", AMR_df$sample_id, fixed=TRUE)
+
+#merge wgs_id from wgs_df to mlst_df to set as species value
+AMR_df <- merge(AMR_df,wgs_species,by = "sample_id")
+
+
+
+#vector to hold list of amr gene datables
+amr_gene_df_list = c()
+
 for(i in mlst_df_list) {
   df <- get(i)
-  
   sample_id <- c(df$sample_id)
+  
+  #create new dataframe to duplicate AMR_df
+  amr_genes_df <- AMR_df
+  
+  amr_genes_df$Newcols <- paste(amr_genes_df$Element.type,amr_genes_df$Subclass, sep = " ")
+  
+  #subset dataframe to retain needed columns only
+  amr_genes_df <- subset(amr_genes_df, select = c(sample_id,Newcols,Gene.symbol))
+  
+  
+  #convert multiple rows with same Newcols value to single row
+  amr_genes_df <- amr_genes_df %>%
+    group_by(Newcols, sample_id) %>%
+    summarize(Concat = paste0(Gene.symbol, collapse = ", "))
 
-  #change "-" to "_" in sample_id column
-  AMR_df$Name <- gsub("-", "_", AMR_df$Name, fixed=TRUE)
+  #Create new dataframe to summarize the result
+  amr_genes_df <- amr_genes_df  %>%
+    pivot_wider(names_from = Newcols,
+                values_from = Concat)
+  
   
   #assign new name to dataframe
   nam <- paste("amr", i, sep = "_")
-  assign(nam, AMR_df[AMR_df$Name %in% sample_id, ])
+  assign(nam, amr_genes_df[amr_genes_df$sample_id %in% sample_id, ])
+  
+  amr_gene_df_list <- c(amr_gene_df_list, nam)
 
 }
 
 
-  
-df_AMR_sample <- subset(amr_df_abaumannii_2, select = c(Name, Gene.symbol,Element.type,Class))
-df_AMR_sample$Newcols <- paste(df_AMR_sample$Element.type, df_AMR_sample$Class, sep = " ")
-  
 ```
 
+```{r amr_genes_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+for(i in amr_gene_df_list) {
+  df <- get(i)
+  
+  #merge wgs_id from wgs_df to mlst_df to set as species value
+  df <- merge(df,wgs_species,by = "sample_id")
+  
+  #Change wgs_id to species
+  names(df)[names(df) == 'wgs_id'] <- 'species'
+  
+  #reorder column
+  df <- df %>%
+    relocate(species, .after = sample_id)
+  
 
+  df <- df[,colSums(is.na(df))<nrow(df)]
+
+  print(df %>% 
+    kable(booktabs = T, align = "c", row.names = FALSE)%>%
+    kable_styling(latex_options = "scale_down") %>%
+    row_spec(0, background = "#D4D4D4",bold = TRUE))
+  
+  cat("\\vspace{1em}")
+
+}
+
+
+```
 
 
 

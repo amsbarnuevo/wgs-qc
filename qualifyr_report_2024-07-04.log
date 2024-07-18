@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  17 JUL 2024 16:05
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  18 JUL 2024 14:41
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1608,27 +1608,58 @@ Underfull \hbox (badness 10000) in paragraph at lines 300--301
  []
 
 
-Overfull \hbox (29.48946pt too wide) in alignment at lines 305--311
+Overfull \hbox (29.48946pt too wide) in alignment at lines 304--310
 [] [] [] [] [] [] [] [] [] [] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 361--362
+
+ []
+
+
+Overfull \hbox (145.56514pt too wide) in alignment at lines 365--371
+[] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (1004.95837pt too wide) in alignment at lines 373--386
+[] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] 
+ []
+
+[5]
+Overfull \hbox (1959.65857pt too wide) in alignment at lines 388--396
+[] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (2465.83679pt too wide) in alignment at lines 398--412
+[] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [
+] [] [] 
+ []
+
+
+Overfull \hbox (215.97253pt too wide) in alignment at lines 414--420
+[] [] [] [] [] [] [] [] 
  []
 
 
 Package caption Warning: Unused \captionsetup[table] on input line 111.
 See the caption package documentation for explanation.
 
-[5] (qualifyr_report_2024-07-04.aux)
+[6] (qualifyr_report_2024-07-04.aux)
  ***********
 LaTeX2e <2023-11-01>
 L3 programming layer <2023-11-09>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 21860 strings out of 409717
- 394758 string characters out of 5774923
+ 21867 strings out of 409717
+ 394803 string characters out of 5774923
  2005189 words of memory out of 5000000
- 43558 multiletter control sequences out of 15000+600000
+ 43565 multiletter control sequences out of 15000+600000
  566999 words of font info for 111 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 90i,9n,122p,1025b,447s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,9n,122p,1663b,455s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on qualifyr_report_2024-07-04.pdf (5 pages).
+Output written on qualifyr_report_2024-07-04.pdf (6 pages).
