@@ -125,7 +125,7 @@ if(utp_sample_count !=0){
 #wgs_df <- read_xlsx("wgs_df_2024-05-03.xlsx")
 
 if(nrow(wgs_df) != 0){
-  rmarkdown::render("wgs_qc_report_ver6.Rmd",
+  rmarkdown::render("wgs_qc_report_ver7.Rmd",
                     output_file = paste("qualifyr_report_",get_batchname, '.pdf', sep='')
   ) 
 }else{

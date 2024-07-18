@@ -26,6 +26,9 @@ header-includes:
 - \usepackage[font={small,bf}]{caption}
 - \usepackage{multirow}
 - \usepackage{array}
+- \usepackage{lscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
 
 ---
 
@@ -549,7 +552,9 @@ reco_table %>%
 
 ```
 
-$\\$
+
+\newpage
+\blandscape
 
 ### MLST RESULTS:
 ```{r mlst_df ,echo=FALSE, message=FALSE, warning=FALSE}
@@ -761,5 +766,5 @@ knitr::kable(df,format='latex',booktabs = T)%>%
 ```
 
 
-
+\elandscape
 
