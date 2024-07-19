@@ -34,6 +34,7 @@ header-includes:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.pos = 'H')
 ```
 
 ```{r load library, echo=FALSE, message=FALSE, warning=FALSE}
@@ -553,7 +554,7 @@ reco_table %>%
 ```
 
 
-### MLST RESULTS:
+### MLST RESULTS
 ```{r mlst_df ,echo=FALSE, message=FALSE, warning=FALSE}
 #Remain Data column
 mlst_df_clean <- mlst_df %>%
@@ -648,13 +649,54 @@ for(i in mlst_df_list) {
 ```
 
 
+### MLST RESULTS SUMMARY:
+
+```{r mlst_summary ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+mlst_summary <- data.frame(Species=character(), 
+                 MLST=character(), 
+                 stringsAsFactors=FALSE) 
+
+for(i in mlst_df_list) {
+  df <- get(i)
+  
+  #get unique species value
+  species <- unique(df$wgs_id)
+
+  #remove from list all value with "quasi"
+  species <- species[!species %in% grep("quasi", species, value = T)]
+
+  #Summarize and count MLST results
+  mlst_count_df <- df %>% group_by(MLST) %>% summarise(count = sum(!is.na(MLST)))
+  mlst_count_df $mlst_count <- paste0(mlst_count_df $MLST, " (n= ", mlst_count_df $count, " )")
+
+  #Remove empty MLST result
+  #mlst_count_df  <- subset(mlst_count_df , mlst_count_df $MLST !='-')
+
+  #add new data to exisiting dataframe
+  mlst_summary[nrow(mlst_summary) + 1,] = c(species, paste0(mlst_count_df $mlst_count, collapse=","))
+  
+}
+
+
+#Print table
+ mlst_summary_table <- kable(mlst_summary,align = "l", row.names = FALSE) %>%
+    kable_styling(position = "left") %>%
+    row_spec(0, background = "#D4D4D4",bold = TRUE)
+      
+  print(mlst_summary_table)
+
+```
+
+
+
+
 
 
 \newpage
 \blandscape
 
 
-### AMR PREDICTION RESULTS:
+### AMR PREDICTION RESULTS
 
 ```{r amr_genes ,echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -727,8 +769,8 @@ for(i in amr_gene_df_list) {
 
   df <- df[,colSums(is.na(df))<nrow(df)]
   
-  amr_gene_table <- knitr::kable(df,format='latex',booktabs = T)%>%
-    kable_styling(latex_options = c("hold_position", "scale_down")) %>%
+  amr_gene_table <- knitr::kable(df,format='latex',booktabs = T,align = "c")%>%
+    kable_styling(latex_options = c("HOLD_position", "scale_down")) %>%
     row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
     column_spec(2:ncol(df), width = "3cm")
 
