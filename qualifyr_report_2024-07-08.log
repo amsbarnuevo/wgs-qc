@@ -1,9 +1,9 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  19 JUL 2024 09:41
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  19 JUL 2024 09:57
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**./qualifyr_report_2024-07-04.tex
-(qualifyr_report_2024-07-04.tex
+**./qualifyr_report_2024-07-08.tex
+(qualifyr_report_2024-07-08.tex
 LaTeX2e <2023-11-01>
 L3 programming layer <2023-11-09>
 (C:\Users\ambarnuevo\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
@@ -814,8 +814,8 @@ File: bkm-dvipdfm.def 2020-11-06 v1.29 bookmark driver for dvipdfm (HO)
 \BKM@id=\count333
 )) (C:\Users\ambarnuevo\AppData\Local\Programs\MiKTeX\tex/latex/xurl\xurl.sty
 Package: xurl 2022/01/09 v 0.10 modify URL breaks
-) (qualifyr_report_2024-07-04.aux)
-\openout1 = `qualifyr_report_2024-07-04.aux'.
+) (qualifyr_report_2024-07-08.aux)
+\openout1 = `qualifyr_report_2024-07-08.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 108.
 LaTeX Font Info:    ... okay on input line 108.
@@ -1497,144 +1497,134 @@ LaTeX Font Info:    Font shape `TU/Helvetica(0)/m/n' will be
 LaTeX Font Info:    Font shape `TU/Helvetica(0)/b/n' will be
 (Font)              scaled to size 7.0pt on input line 122.
 
-Overfull \hbox (0.68044pt too wide) in paragraph at lines 130--130
- []|\TU/Helvetica(0)/m/n/7 24ARS_DMC0098| 
+Overfull \hbox (1.07008pt too wide) in paragraph at lines 128--128
+ []|\TU/Helvetica(0)/m/n/7 22ARS_GMH0061| 
  []
 
 
-Overfull \hbox (0.68044pt too wide) in paragraph at lines 131--131
- []|\TU/Helvetica(0)/m/n/7 24ARS_DMC0102| 
- []
-
-
-Overfull \hbox (1.07008pt too wide) in paragraph at lines 134--134
- []|\TU/Helvetica(0)/m/n/7 24ARS_GMH0029| 
+Overfull \hbox (0.68044pt too wide) in paragraph at lines 139--139
+ []|\TU/Helvetica(0)/m/n/7 24ARS_DMC0129| 
  []
 
 LaTeX Font Info:    Font shape `TU/Helvetica(0)/m/n' will be
-(Font)              scaled to size 5.0pt on input line 152.
+(Font)              scaled to size 5.0pt on input line 153.
 LaTeX Font Info:    Font shape `TU/Helvetica(0)/m/n' will be
-(Font)              scaled to size 4.0pt on input line 152.
-LaTeX Font Info:    Calculating math sizes for size <4> on input line 154.
+(Font)              scaled to size 4.0pt on input line 153.
+LaTeX Font Info:    Calculating math sizes for size <4> on input line 155.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 4.85785pt on input line 154.
+(Font)              scaled to size 4.85785pt on input line 155.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 3.40047pt on input line 154.
+(Font)              scaled to size 3.40047pt on input line 155.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 2.42892pt on input line 154.
+(Font)              scaled to size 2.42892pt on input line 155.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 4.85834pt on input line 154.
+(Font)              scaled to size 4.85834pt on input line 155.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 3.40082pt on input line 154.
+(Font)              scaled to size 3.40082pt on input line 155.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 2.42917pt on input line 154.
+(Font)              scaled to size 2.42917pt on input line 155.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 4.85736pt on input line 154.
+(Font)              scaled to size 4.85736pt on input line 155.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 3.40013pt on input line 154.
+(Font)              scaled to size 3.40013pt on input line 155.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 2.42868pt on input line 154.
+(Font)              scaled to size 2.42868pt on input line 155.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 8.50124pt on input line 165.
+(Font)              scaled to size 8.50124pt on input line 166.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 6.07231pt on input line 165.
+(Font)              scaled to size 6.07231pt on input line 166.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 8.50209pt on input line 165.
+(Font)              scaled to size 8.50209pt on input line 166.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 6.07292pt on input line 165.
+(Font)              scaled to size 6.07292pt on input line 166.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 8.50038pt on input line 165.
+(Font)              scaled to size 8.50038pt on input line 166.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 6.0717pt on input line 165.
+(Font)              scaled to size 6.0717pt on input line 166.
 
-Underfull \hbox (badness 10000) in paragraph at lines 175--176
+Underfull \hbox (badness 10000) in paragraph at lines 166--167
 
  []
 
 [1
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 265--267
+Underfull \hbox (badness 10000) in paragraph at lines 255--257
 
  []
 
 LaTeX Font Info:    Font shape `TU/Helvetica(0)/b/n' will be
-(Font)              scaled to size 10.0pt on input line 269.
-File: qualifyr_report_2024-07-04_files/figure-latex/pie_chart-1.pdf Graphic fil
+(Font)              scaled to size 10.0pt on input line 259.
+File: qualifyr_report_2024-07-08_files/figure-latex/pie_chart-1.pdf Graphic fil
 e (type pdf)
-<use qualifyr_report_2024-07-04_files/figure-latex/pie_chart-1.pdf>
-File: qualifyr_report_2024-07-04_files/figure-latex/organism results-1.pdf Grap
+<use qualifyr_report_2024-07-08_files/figure-latex/pie_chart-1.pdf>
+File: qualifyr_report_2024-07-08_files/figure-latex/organism results-1.pdf Grap
 hic file (type pdf)
-<use qualifyr_report_2024-07-04_files/figure-latex/organism results-1.pdf>
+<use qualifyr_report_2024-07-08_files/figure-latex/organism results-1.pdf>
 [2]
-File: qualifyr_report_2024-07-04_files/figure-latex/unnamed-chunk-1-1.pdf Graph
+File: qualifyr_report_2024-07-08_files/figure-latex/unnamed-chunk-1-1.pdf Graph
 ic file (type pdf)
-<use qualifyr_report_2024-07-04_files/figure-latex/unnamed-chunk-1-1.pdf>
-File: qualifyr_report_2024-07-04_files/figure-latex/n50_result -1.pdf Graphic f
+<use qualifyr_report_2024-07-08_files/figure-latex/unnamed-chunk-1-1.pdf>
+File: qualifyr_report_2024-07-08_files/figure-latex/n50_result -1.pdf Graphic f
 ile (type pdf)
-<use qualifyr_report_2024-07-04_files/figure-latex/n50_result -1.pdf>
+<use qualifyr_report_2024-07-08_files/figure-latex/n50_result -1.pdf>
 [3]
-File: qualifyr_report_2024-07-04_files/figure-latex/length_result -1.pdf Graphi
+File: qualifyr_report_2024-07-08_files/figure-latex/length_result -1.pdf Graphi
 c file (type pdf)
-<use qualifyr_report_2024-07-04_files/figure-latex/length_result -1.pdf>
+<use qualifyr_report_2024-07-08_files/figure-latex/length_result -1.pdf>
 
-Underfull \hbox (badness 10000) in paragraph at lines 294--295
+Underfull \hbox (badness 10000) in paragraph at lines 284--285
 
  []
 
 [4]
-Overfull \hbox (15.16908pt too wide) in alignment at lines 308--314
+Overfull \hbox (15.55873pt too wide) in alignment at lines 298--313
 [] [] [] [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (15.16908pt too wide) in alignment at lines 316--329
+Overfull \hbox (15.55873pt too wide) in alignment at lines 315--325
 [] [] [] [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (15.16908pt too wide) in alignment at lines 331--339
+Overfull \hbox (16.54994pt too wide) in alignment at lines 327--337
 [] [] [] [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (15.16908pt too wide) in alignment at lines 341--355
+Overfull \hbox (15.55873pt too wide) in alignment at lines 339--345
 [] [] [] [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (15.16908pt too wide) in alignment at lines 357--363
+Overfull \hbox (15.55873pt too wide) in alignment at lines 347--353
 [] [] [] [] [] [] [] [] [] [] 
  []
 
 [5]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 12.14584pt on input line 394.
+(Font)              scaled to size 12.14584pt on input line 393.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 12.1434pt on input line 394.
+(Font)              scaled to size 12.1434pt on input line 393.
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 412--412
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 423--423
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 425--425
- \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
- []
-
-
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 444--444
- \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
- []
-
-
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 455--455
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 434--434
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
 [6
 
-] [7] (qualifyr_report_2024-07-04.aux)
+]
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 445--445
+ \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
+ []
+
+[7] (qualifyr_report_2024-07-08.aux)
  ***********
 LaTeX2e <2023-11-01>
 L3 programming layer <2023-11-09>
@@ -1643,10 +1633,10 @@ L3 programming layer <2023-11-09>
 Here is how much of TeX's memory you used:
  21888 strings out of 409717
  395394 string characters out of 5774923
- 2030189 words of memory out of 5000000
+ 2011189 words of memory out of 5000000
  43583 multiletter control sequences out of 15000+600000
  567896 words of font info for 116 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 90i,12n,122p,1640b,435s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,12n,122p,1202b,440s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on qualifyr_report_2024-07-04.pdf (7 pages).
+Output written on qualifyr_report_2024-07-08.pdf (7 pages).
