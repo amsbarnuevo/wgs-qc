@@ -553,11 +553,6 @@ reco_table %>%
 ```
 
 
-
-\newpage
-\blandscape
-
-
 ### MLST RESULTS:
 ```{r mlst_df ,echo=FALSE, message=FALSE, warning=FALSE}
 #Remain Data column
@@ -636,9 +631,12 @@ for(i in mlst_df_list) {
     #kable_styling(position = "left") %>%
     #row_spec(0, background = "#D4D4D4",bold = TRUE)
   
-  mlst_table <- kable(df,align = "c") %>%
+  mlst_table <- kable(df,align = "c", row.names = FALSE) %>%
     kable_styling(latex_options = c("hold_position","scale_down"), position = "left") %>%
-    row_spec(0, background = "#D4D4D4",bold = TRUE)
+    row_spec(0, background = "#D4D4D4",bold = TRUE)%>%
+    column_spec(1:2, width = "3cm") %>%
+    column_spec(3:9, width = "1cm") %>%
+
 
       
   print(mlst_table)
@@ -649,8 +647,12 @@ for(i in mlst_df_list) {
 
 ```
 
-$\\$
-$\\$
+
+
+
+\newpage
+\blandscape
+
 
 ### AMR PREDICTION RESULTS:
 

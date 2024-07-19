@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  18 JUL 2024 17:36
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  19 JUL 2024 08:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1582,41 +1582,62 @@ Underfull \hbox (badness 10000) in paragraph at lines 294--295
 
  []
 
-[4] [5]
-Underfull \hbox (badness 10000) in paragraph at lines 369--370
-
+[4]
+Overfull \hbox (15.16908pt too wide) in alignment at lines 308--314
+[] [] [] [] [] [] [] [] [] [] 
  []
 
+
+Overfull \hbox (15.16908pt too wide) in alignment at lines 316--329
+[] [] [] [] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (15.16908pt too wide) in alignment at lines 331--339
+[] [] [] [] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (15.16908pt too wide) in alignment at lines 341--355
+[] [] [] [] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (15.16908pt too wide) in alignment at lines 357--363
+[] [] [] [] [] [] [] [] [] [] 
+ []
+
+[5]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 12.14584pt on input line 382.
+(Font)              scaled to size 12.14584pt on input line 380.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 12.1434pt on input line 382.
-[6
+(Font)              scaled to size 12.1434pt on input line 380.
 
-]
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 400--400
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 398--398
 \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN|  
  []
 
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 413--413
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 411--411
 \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN|  
  []
 
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 432--432
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 430--430
 \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN|  
  []
 
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 443--443
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 441--441
 \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN|  
  []
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[7] [8] (qualifyr_report_2024-07-04.aux)
+[6
+
+] [7] (qualifyr_report_2024-07-04.aux)
  ***********
 LaTeX2e <2023-11-01>
 L3 programming layer <2023-11-09>
@@ -1631,4 +1652,4 @@ Here is how much of TeX's memory you used:
  1348 hyphenation exceptions out of 8191
  90i,12n,122p,1640b,435s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on qualifyr_report_2024-07-04.pdf (8 pages).
+Output written on qualifyr_report_2024-07-04.pdf (7 pages).
