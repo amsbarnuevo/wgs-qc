@@ -546,9 +546,9 @@ colnames(reco_table) <- c('Sample ID','Action','Reason')
 reco_table %>% 
   kable(booktabs = T, align = "c")%>%
   kable_styling(position = "left") %>%
-  column_spec(1, width = "8cm") %>%
-  column_spec(2, width = "3cm") %>%
-  column_spec(3, width = "4cm") %>%
+  column_spec(1, width = "6cm") %>%
+  column_spec(2, width = "4cm") %>%
+  column_spec(3, width = "6cm") %>%
   row_spec(0, background = "#D4D4D4",bold = TRUE)
 
 ```

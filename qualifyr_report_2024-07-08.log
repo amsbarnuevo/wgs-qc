@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  22 JUL 2024 09:54
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  22 JUL 2024 10:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1575,6 +1575,11 @@ c file (type pdf)
 
 Underfull \hbox (badness 10000) in paragraph at lines 284--285
 
+ []
+
+
+Overfull \hbox (2.14119pt too wide) in alignment at lines 288--294
+[] [] [] 
  []
 
 [4]
