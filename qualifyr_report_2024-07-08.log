@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  19 JUL 2024 09:57
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  22 JUL 2024 09:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1604,23 +1604,25 @@ Overfull \hbox (15.55873pt too wide) in alignment at lines 347--353
 
 [5]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 12.14584pt on input line 393.
+(Font)              scaled to size 12.14584pt on input line 395.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 12.1434pt on input line 393.
+(Font)              scaled to size 12.1434pt on input line 395.
+LaTeX Font Info:    Font shape `TU/Helvetica(0)/b/it' will be
+(Font)              scaled to size 10.0pt on input line 395.
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 423--423
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 429--429
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 434--434
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 442--442
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
 [6
 
 ]
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 445--445
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 455--455
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
@@ -1631,12 +1633,12 @@ L3 programming layer <2023-11-09>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 21888 strings out of 409717
- 395394 string characters out of 5774923
+ 21891 strings out of 409717
+ 395506 string characters out of 5774923
  2011189 words of memory out of 5000000
- 43583 multiletter control sequences out of 15000+600000
- 567896 words of font info for 116 fonts, out of 8000000 for 9000
+ 43585 multiletter control sequences out of 15000+600000
+ 567904 words of font info for 117 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 90i,12n,122p,1202b,440s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,12n,122p,1157b,440s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on qualifyr_report_2024-07-08.pdf (7 pages).

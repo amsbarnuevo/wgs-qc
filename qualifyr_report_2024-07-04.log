@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  19 JUL 2024 09:41
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  22 JUL 2024 10:28
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1609,26 +1609,28 @@ Overfull \hbox (15.16908pt too wide) in alignment at lines 357--363
 
 [5]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 12.14584pt on input line 394.
+(Font)              scaled to size 12.14584pt on input line 396.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 12.1434pt on input line 394.
+(Font)              scaled to size 12.1434pt on input line 396.
+LaTeX Font Info:    Font shape `TU/Helvetica(0)/b/it' will be
+(Font)              scaled to size 10.0pt on input line 396.
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 412--412
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 416--416
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 425--425
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 431--431
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 444--444
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 452--452
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 455--455
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 465--465
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
@@ -1641,12 +1643,12 @@ L3 programming layer <2023-11-09>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 21888 strings out of 409717
- 395394 string characters out of 5774923
- 2030189 words of memory out of 5000000
- 43583 multiletter control sequences out of 15000+600000
- 567896 words of font info for 116 fonts, out of 8000000 for 9000
+ 21891 strings out of 409717
+ 395506 string characters out of 5774923
+ 2028189 words of memory out of 5000000
+ 43585 multiletter control sequences out of 15000+600000
+ 567904 words of font info for 117 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 90i,12n,122p,1640b,435s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,12n,122p,1595b,435s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on qualifyr_report_2024-07-04.pdf (7 pages).

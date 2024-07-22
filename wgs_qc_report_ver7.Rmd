@@ -776,14 +776,16 @@ for(i in amr_gene_df_list) {
 
   #remove from list all value with "quasi"
   species <- species[!species %in% grep("quasi", species, value = T)]
+  species_caption <- paste("\\\\textit{",species,"}", sep = "")
   
   #subset dataframe to retain needed columns only
   df <- subset(df, select = -c(species))
   
-  amr_gene_table <- knitr::kable(df,format='latex',booktabs = T,align = "c", caption = species)%>%
+  amr_gene_table <- knitr::kable(df,format='latex',booktabs = T,align = "c")%>%
     kable_styling(latex_options = c("HOLD_position", "scale_down")) %>%
     row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
-    column_spec(2:ncol(df), width = "3cm")
+    column_spec(2:ncol(df), width = "3cm") %>%
+    add_header_above(setNames(ncol(df),species_caption),bold = TRUE, escape = FALSE, align = "l")
 
   
   #amr_gene_table <- kable(df,align = "c") %>%
