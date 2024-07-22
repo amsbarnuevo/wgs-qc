@@ -536,9 +536,9 @@ $\\$
 
 ### RECOMMENDATION:
 ```{r recommendation table ,echo=FALSE, message=FALSE, warning=FALSE}
-sample_id <- c("No further action required for this batch.")
-action <- c("")
-reason <- c("")
+sample_id <- c("24ARS_NKI0054")
+action <- c("For repeat sequencing")
+reason <- c("QC failure (high contigs and low N50)")
 reco_table <- data.frame(sample_id,action, reason)
   
 colnames(reco_table) <- c('Sample ID','Action','Reason')

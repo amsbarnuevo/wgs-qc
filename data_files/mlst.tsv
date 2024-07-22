@@ -12,7 +12,7 @@
 24ARS-JLM0064.fna.gz	paeruginosa	-	acsA(28)	aroE(20)	guaA(11)	mutL(11)	nuoD(4)	ppsA(4)	trpE(~219)
 22ARS-JLM0026.fna.gz	neisseria	-	abcZ(59)	adk(~39)	aroE(67)	fumC(78)	gdh(148)	pdhC(153)	pgm(65)
 22ARS-BGH0096.fna.gz	neisseria	-	abcZ(59)	adk(39)	aroE(~789)	fumC(111)	gdh(148)	pdhC(71)	pgm(65)
-24ARS-BGH0065.fna.gz	neisseria	7363	abcZ(59)	adk(39)	aroE(67)	fumC(78)	gdh(148)	pdhC(153)	pgm(65)
+22ARS-BGH0065.fna.gz	neisseria	7363	abcZ(59)	adk(39)	aroE(67)	fumC(78)	gdh(148)	pdhC(153)	pgm(65)
 24ARS-NKI0054.fna.gz	paeruginosa	-	acsA(-)	aroE(5)	guaA(11)	mutL(354?)	nuoD(3)	ppsA(15)	trpE(1)
 22ARS-BGH0063.fna.gz	neisseria	13333	abcZ(59)	adk(39)	aroE(170)	fumC(78)	gdh(148)	pdhC(153)	pgm(133)
 24ARS-NKI0055.fna.gz	paeruginosa	235	acsA(38)	aroE(11)	guaA(3)	mutL(13)	nuoD(1)	ppsA(2)	trpE(4)
