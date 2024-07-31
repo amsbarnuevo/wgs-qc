@@ -94,6 +94,16 @@ wgs_samplesheet <- wgs_samplesheet %>%
   mutate(sample_name = sapply(sample_name, remove_second_underscore)) %>%
   mutate(sample_id = sapply(sample_id, remove_second_underscore))
 
+#Check if STC sample is present in the id list
+stc_sample <- grep("STC", wgs_samplesheet[['sample_name']], value = TRUE)
+stc_sample_count <- length(stc_sample)
+
+if (stc_sample_count !=0){
+  wgs_samplesheet$sample_name <- gsub("STC", "STC_", wgs_samplesheet$sample_name, fixed=TRUE)
+  wgs_samplesheet$sample_id <- gsub("STC", "STC_", wgs_samplesheet$sample_id, fixed=TRUE)
+}
+
+
 #Get experiment name
 WGS_exp_name <- unique(wgs_samplesheet[['experiment name']])
 
@@ -300,7 +310,9 @@ kable(legend_tbl2,  "latex", booktabs = T, col.names = NULL, align = "c") %>%
 \renewcommand{\arraystretch}{1.2}
 
 ```{r warning summary, echo=FALSE, message=FALSE, warning=FALSE,results='asis'}
-warning_summary_df <- wgs_warning_df
+#warning_summary_df <- wgs_warning_df
+warning_summary_df <-  subset(wgs_df, result == "WARNING")
+
 
 #remove some columns in the dataframe
 warning_summary_df <- subset(warning_summary_df, select = -c(result, check_result, contamination_value, contamination_result,no_of_contigs_value,no_of_contigs_result,gc_percent_value,gc_percent_result,n50_value,n50_result,total_length_value,total_length_result))
@@ -315,17 +327,16 @@ warning_summary_df$cols_warning <- ifelse(seq_len(nrow(warning_summary_df)) %in%
 warning_summary_df <- subset(warning_summary_df, select = c('iso_num','sample_id', 'cols_warning'))
 #qc_listing_df <- qc_listing_df[, c(3,1,5,2,4)] 
 
-
 if (nrow(warning_summary_df !=0)){
   colnames(warning_summary_df) <- c('Isolate No.','Sample ID','Value with warning/s') 
 
   warning_summary_df %>% 
-    kable(booktabs = T, align = "cl", escape = FALSE) %>%
+    kable(booktabs = T, align = "cl", escape = FALSE, row.names = FALSE) %>%
     kable_styling(latex_options = "striped") %>%
     column_spec(1, width = "2cm") %>%
     column_spec(2, width = "3cm") %>%
     column_spec(3, width = "11cm") %>%
-    row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c")%>%
+    row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c") %>%
     add_header_above(c("With Warning/s" = 3), align = "l", bold = TRUE)
 }
 
@@ -536,9 +547,9 @@ $\\$
 ### RECOMMENDATION:
 ```{r recommendation table ,echo=FALSE, message=FALSE, warning=FALSE}
 if (nrow(wgs_lowreads) != 0 ){
-  sample_id <- c("24ARS_NKI0054")
-  action <- c("For repeat sequencing")
-  reason <- c("QC failure (high contigs and low N50)")
+  sample_id <- c(" ")
+  action <- c("")
+  reason <- c("")
   reco_table <- data.frame(sample_id,action, reason)
   
   colnames(reco_table) <- c('Sample ID','Action','Reason')
