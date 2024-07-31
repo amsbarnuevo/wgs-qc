@@ -44,6 +44,18 @@ remove_second_underscore <- function(x) {
 wgs_df <- wgs_df %>%
   mutate(sample_name = sapply(sample_name, remove_second_underscore))
 
+
+
+#Check if STC sample is present in the id list
+stc_sample <- grep("STC", wgs_df[['sample_name']], value = TRUE)
+stc_sample_count <- length(stc_sample)
+
+if (stc_sample_count !=0){
+  wgs_df$sample_name <- gsub("STC", "STC_", wgs_df$sample_name, fixed=TRUE)
+}
+
+
+
 wgs_df[wgs_df == 'WARN'] <- 'WARNING'
 wgs_df[wgs_df == 'FAIL'] <- 'FAILURE'
 
@@ -120,6 +132,9 @@ if(utp_sample_count !=0){
   arsrl_result_df <- subset(result , select = c(sample_name,arsrl_org))
   colnames(arsrl_result_df) <- c('sample_id','arsrl_org') 
 }
+
+
+
 
 
 #wgs_df <- read_xlsx("wgs_df_2024-05-03.xlsx")
