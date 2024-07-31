@@ -134,6 +134,23 @@ if(utp_sample_count !=0){
 }
 
 
+#manually add result for STC
+if(stc_sample_count !=0){
+  sample_name = stc_sample
+  sample_name <- gsub("STC", "STC_", sample_name, fixed=TRUE)
+  arsrl_org = "Pseudomonas aeruginosa"
+  
+  arsrl_result_df <- result %>% 
+    add_row(sample_name = sample_name, arsrl_org=arsrl_org)
+  
+  arsrl_result_df <- subset(arsrl_result_df , select = c(sample_name,arsrl_org))
+  colnames(arsrl_result_df) <- c('sample_id','arsrl_org') 
+  
+}else{
+  arsrl_result_df <- subset(result , select = c(sample_name,arsrl_org))
+  colnames(arsrl_result_df) <- c('sample_id','arsrl_org') 
+}
+
 
 
 
