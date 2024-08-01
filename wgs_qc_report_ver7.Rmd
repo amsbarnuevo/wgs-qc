@@ -547,9 +547,9 @@ $\\$
 ### RECOMMENDATION:
 ```{r recommendation table ,echo=FALSE, message=FALSE, warning=FALSE}
 if (nrow(wgs_lowreads) != 0 ){
-  sample_id <- c(" ")
-  action <- c("")
-  reason <- c("")
+  sample_id <- c("24ARS_NKI0054", "22ARS_VSM0456")
+  action <- c("Repeat testing", "Repeat testing")
+  reason <- c("Low read count", "QC failure (high contigs)")
   reco_table <- data.frame(sample_id,action, reason)
   
   colnames(reco_table) <- c('Sample ID','Action','Reason')
@@ -693,26 +693,6 @@ mlst_summary <- data.frame(Species=character(),
                  stringsAsFactors=FALSE) 
 
 for(i in mlst_df_list) {
-  if (length(mlst_df_list) >1){
-    df <- get(i)
-  
-    #get unique species value
-    species <- unique(df$wgs_id)
-
-    #remove from list all value with "quasi"
-    species <- species[!species %in% grep("quasi", species, value = T)]
-
-    #Summarize and count MLST results
-    mlst_count_df <- df %>% group_by(MLST) %>% summarise(count = sum(!is.na(MLST)))
-    mlst_count_df$mlst_count <- paste0(mlst_count_df$MLST, " (n= ", mlst_count_df$count, " )")
-
-    #Remove empty MLST result
-    #mlst_count_df  <- subset(mlst_count_df , mlst_count_df $MLST !='-')
-
-    #add new data to exisiting dataframe
-    mlst_summary[nrow(mlst_summary) + 1,] = c(species, paste0(mlst_count_df$mlst_count, collapse=", "))
-  
-  }else{
     df <- get(i)
   
     #get unique species value
@@ -728,11 +708,16 @@ for(i in mlst_df_list) {
     #Remove empty MLST result
     #mlst_count_df  <- subset(mlst_count_df , mlst_count_df $MLST !='-')
     mlst_count_summary  <- subset(mlst_count_df , select = c(wgs_id, mlst_count))
-    mlst_summary <- mlst_count_summary %>% 
+    mlst_summary_df <- mlst_count_summary %>% 
       group_by(wgs_id) %>% 
       mutate(mlst_count = paste0(mlst_count, collapse = ", ")) %>%
       distinct()
-  }
+    
+    #assign new name to dataframe
+    #nam <- paste("mlst", i, sep = "_")
+    #assign(nam, mlst_summary)
+    
+    mlst_summary <- rbind(mlst_summary,mlst_summary_df)
   
 }
 
