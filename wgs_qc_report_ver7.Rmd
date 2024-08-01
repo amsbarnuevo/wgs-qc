@@ -29,6 +29,8 @@ header-includes:
 - \usepackage{lscape}
 - \newcommand{\blandscape}{\begin{landscape}}
 - \newcommand{\elandscape}{\end{landscape}}
+- \usepackage[dvipsnames]{xcolor}
+- \renewcommand{\footnotesize}{\tiny}
 
 ---
 
@@ -68,6 +70,14 @@ wgs_df$iso_num <- seq.int(nrow(wgs_df))
 wgs_df$ORG[grepl("Salmonella",wgs_df$wgs_id)] = "sal"
 wgs_df$ORG[grepl("Shigella",wgs_df$wgs_id)] = "shi"
 wgs_df$ORG[grepl("Vibrio",wgs_df$wgs_id)] = "vic"
+
+#identify organism groups
+wgs_df$Group <- ifelse((wgs_df$ORG == 'sal' & wgs_df$wgs_id == 'Salmonella enterica subsp. enterica serovar Typhi'),"Salmonella enterica, typhoidal", ifelse((wgs_df$ORG == 'sal' & wgs_df$wgs_id != 'Salmonella enterica subsp. enterica serovar Typhi'),"Salmonella enterica, nontyphoidal", wgs_df$wgs_id))
+
+
+#identify salmonella typhi and salmonella nontyphi
+wgs_df$ORG <- ifelse((wgs_df$ORG == 'sal' & wgs_df$Group == 'Salmonella enterica, typhoidal'), 'sat', wgs_df$ORG)
+
 
 wgs_df$warning_count <- ifelse(wgs_df$check_result == 'WARNING',1,
                                ifelse(wgs_df$dups_result == 'WARNING',2,
@@ -129,8 +139,9 @@ wgs_df <- merge(unique(wgs_df), unique(wgs_samplesheet_good), by = "sample_id", 
 #arsrl_result_df$sample_id <- gsub("_", "\\_", arsrl_result_df$sample_id, fixed=TRUE)
 #wgs_df$sample_id <- gsub("_", "\\_", wgs_df$sample_id, fixed=TRUE)
 
-retain_column <- c('iso_num','sample_id','wgs_id','description')
+retain_column <- c('iso_num','sample_id','wgs_id','description','Group')
 wgs_result_df <- subset(wgs_df, select = retain_column)
+
 
 #qc_listing_df <- merge(x=arsrl_result_df,y=wgs_result_df, by="sample_id", all.x=TRUE)
 qc_listing_df <- merge(unique(arsrl_result_df), unique(wgs_result_df), by = "sample_id", all.x= TRUE) 
@@ -158,11 +169,13 @@ qc_listing_df = subset(qc_listing_df, select = -c(Genus) )
 
 #qc_listing_df$iso_num <- seq.int(nrow(qc_listing_df))
 
-colnames(qc_listing_df) <- c('Sample ID','ARSRL','Isolate No.','WGS','Description')
+colnames(qc_listing_df) <- c('Sample ID','ARSRL','Isolate No.','WGS','Description','Group')
 
-qc_listing_df <- qc_listing_df[, c(3,1,5,2,4)] 
+qc_listing_df1 = subset(qc_listing_df, select = -c(Group) )
 
-qc_listing_df %>% 
+qc_listing_df1 <- qc_listing_df1[, c(3,1,5,2,4)] 
+
+qc_listing_df1 %>% 
   kable(booktabs = T, align = "c", escape = FALSE)%>%
   column_spec(1, width = "1cm") %>%
   column_spec(2, width = "2cm") %>%
@@ -171,35 +184,19 @@ qc_listing_df %>%
   column_spec(5, width = "5.25cm", background = nc_warning) %>%
   row_spec(warning_color, background = "#FFA77F") %>%
   row_spec(failure_color, background = "#FD7979") %>%
-  row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c")
+  row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c") %>%
+  footnote(general = c("PASS","  |  ", 
+                        "\\\\colorbox{Peach}{WARNING}","  |  ", 
+                        "\\\\colorbox{Salmon}{FAILURE}","  |  ",
+                        "\\\\textcolor{Blue}{EXCEEDS THRESHOLD METRIC/S}","  |  ",
+                        "\\\\colorbox{Yellow}{NON-CONCORDANT}","  |"), 
+            general_title = "Legend:",
+            footnote_as_chunk = T, escape = F)
 
 
 ```
 
 
-\tiny Legend:
-```{r qc listing legend, echo=FALSE, message=FALSE, warning=FALSE,results='asis'}
-lgd1 <- c("PASS")
-lgd2 <- c("WARNING")
-lgd3 <- c("FAILURE")
-lgd4 <- c("EXCEEDS THRESHOLD METRIC/S")
-lgd5 <- c("NON-CONCORDANT")
-
-legend_tbl <- data.frame(lgd1,lgd2,lgd3,lgd4,lgd5)
-
-
-kable(legend_tbl,  "latex", booktabs = T, col.names = NULL, align = "c") %>%
-  kable_styling(position = "left",font_size = 4) %>%
-  column_spec(1, width = "1cm",border_left = TRUE,background = "white")%>%
-  column_spec(2, width = "1cm",border_left = TRUE, background = "#FFA77F")%>%
-  column_spec(3, width = "1cm",border_left = TRUE, background = "#FD7979")%>%
-  column_spec(4, width = "3cm",border_left = TRUE,color = "blue")%>%
-  column_spec(5, width = "2cm",background = "yellow",border_left = TRUE, border_right =  TRUE) %>%
-  sub("\\\\toprule", "", .) %>%
-  sub("\\\\bottomrule", "", .)
-
-
-```
 \fontsize{7}{8}
 \selectfont
 \captionsetup[table]{labelformat=empty}
@@ -248,6 +245,12 @@ contigs_warning <- ifelse(wgs_df$no_of_contigs_result == 'FAILURE', "blue",ifels
 n50_warning <- ifelse(wgs_df$n50_result == 'FAILURE', "blue",ifelse(wgs_df$n50_result == 'WARNING',"blue","black"))
 
 
+warning_value <- unique(wgs_warning_df$warning_count)
+warning_value <- ifelse(length(warning_value)==0,0,warning_value)
+
+warn_legend <- ifelse(warning_value == 1,"*Isolates were tagged with warning due to uncertain results of species identification using bactinspector.",ifelse(warning_value == 2,"*Isolates were tagged with warning due to uncertain results of sequence identification levels.",ifelse(warning_value == 3,"*Isolates were tagged with warning due to uncertain results of species identification using bactinspector and sequence identification levels.","*Isolates were tagged with warning due to uncertain results  of species identification using bactinspector or sequence identification levels.")))
+
+
 colnames(wgs_summary_df) <- c('Isolate No.','Sample ID','Contamination','Contigs', 'GC Percent','N50','Total Length')
 
 
@@ -262,43 +265,16 @@ wgs_summary_df %>%
   column_spec(7, width = "2cm") %>%
   row_spec(warning_color, background = "#FFA77F") %>%
   row_spec(failure_color, background = "#FD7979") %>%
-  row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c")
+  row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c") %>%
+  footnote(general = c("PASS","  |  ", 
+                        "\\\\colorbox{Peach}{WARNING}","  |  ", 
+                        "\\\\colorbox{Salmon}{FAILURE}","  |  ",
+                        "\\\\textcolor{Blue}{EXCEEDS THRESHOLD METRIC/S}","  |  "),
+            general_title = "Legend:",
+            footnote_as_chunk = T, 
+            threeparttable = T, escape = F) %>%
+  footnote(general = warn_legend, footnote_as_chunk = T, escape = F)
   
-#write.csv(wgs_df, file="wgs_qc_data.csv")
-```
-
-
-\tiny Legend:
-```{r summary table legend, echo=FALSE, message=FALSE, warning=FALSE,results='asis'}
-warning_value <- unique(wgs_warning_df$warning_count)
-warning_value <- ifelse(length(warning_value)==0,0,warning_value)
-
-
-lgd1 <- c("PASS")
-lgd2 <- c("WARNING")
-lgd3 <- c("FAILURE")
-lgd4 <- c("EXCEEDS THRESHOLD METRIC/S")
-
-lgd5_value <- ifelse(warning_value == 1,"*Isolates were tagged with warning due to uncertain results of species identification using bactinspector.",ifelse(warning_value == 2,"*Isolates were tagged with warning due to uncertain results of sequence identification levels.",ifelse(warning_value == 3,"*Isolates were tagged with warning due to uncertain results of species identification using bactinspector and sequence identification levels.","*Isolates were tagged with warning due to uncertain results  of species identification using bactinspector or sequence identification levels.")))
-  
-  
-lgd5 <- lgd5_value
-#lgd4 <- c("*Isolates were tagged with warning due to uncertain results of species identification using bactinspector")
-  
-legend_tbl2 <- data.frame(lgd1,lgd2,lgd3,lgd4,lgd5)
-
-
-kable(legend_tbl2,  "latex", booktabs = T, col.names = NULL, align = "c") %>%
-  kable_styling(position = "left",font_size = 4) %>%
-  column_spec(1, width = "1cm",border_left = TRUE,background = "white")%>%
-  column_spec(2, width = "1cm",border_left = TRUE, background = "#FFA77F")%>%
-  column_spec(3, width = "1cm",border_left = TRUE, background = "#FD7979")%>%
-  column_spec(4, width = "2.5cm",border_left = TRUE,color = "blue")%>%
-  column_spec(5, width = "8cm",border_left = TRUE, border_right =  TRUE)%>%
-  sub("\\\\toprule", "", .) %>%
-  sub("\\\\bottomrule", "", .)
-
-
 #write.csv(wgs_df, file="wgs_qc_data.csv")
 ```
 
@@ -383,7 +359,7 @@ if (nrow(QC_failed) > 0) {
 
 
 ```{r qc listing summary narrative, echo=FALSE, message=FALSE, warning=FALSE}
-qc_summary_df <- qc_listing_df %>% group_by(WGS) %>% summarise(number = sum(!is.na(WGS)))
+qc_summary_df <- qc_listing_df %>% group_by(Group) %>% summarise(number = sum(!is.na(WGS)))
 qc_summary_df <- qc_summary_df[order(-qc_summary_df$number),]
 
 qc_tl <- nrow(qc_listing_df)
@@ -435,7 +411,7 @@ $\\$
 
 ```{r pie_chart, echo=FALSE, message=FALSE, warning=FALSE}
 # Calculate the counts for each "wgs_id"
-wgs_id_count <- table(wgs_df$wgs_id)
+wgs_id_count <- table(wgs_df$Group)
 
 # Create a data frame with "wgs_id" and their counts
 wgs_count_df <- data.frame(wgs_id = names(wgs_id_count), Frequency = as.vector(wgs_id_count))
@@ -608,13 +584,16 @@ mlst_df_clean$sample_id <- sub("\\..*", "", mlst_df_clean$sample_id)
 mlst_df_clean$sample_id <- gsub("-", "_", mlst_df_clean$sample_id, fixed=TRUE)
 
 #merge wgs_id from wgs_df to mlst_df to set as species value
-wgs_species <- subset(wgs_df, , select = c("sample_id", "wgs_id"))
+wgs_species <- subset(wgs_df, , select = c("sample_id", "wgs_id", "Group"))
 mlst_df_clean <- merge(mlst_df_clean,wgs_species,by = "sample_id")
 
 #reorder column
 mlst_df_clean <- mlst_df_clean %>% 
-  relocate(wgs_id, .after = species)
+  relocate(wgs_id, .after = species) %>%
+  relocate(Group, .after = wgs_id)
 
+#identify salmonella enterica group
+mlst_df_clean$species <- ifelse(mlst_df_clean$Group == 'Salmonella enterica, nontyphoidal', 'salmonella_enterica_nontyphoidal', ifelse(mlst_df_clean$Group == 'Salmonella enterica, typhoidal','salmonella_enterica_typhoidal', mlst_df_clean$species))
 
 #list unique species in the dataframe
 species_list <- unique(mlst_df_clean$species)
@@ -624,10 +603,10 @@ mlst_df_list = c()
 #create multiple dataframe for each species
 for(i in species_list) {
   #retain first three columns
-  mlst_info_df <- subset(mlst_df_clean, select = 1:4)
+  mlst_info_df <- subset(mlst_df_clean, select = 1:5)
   
-  #remove first three columns
-  mlst_result_df <- subset(mlst_df_clean, , select = -c(1, 2, 3,4))
+  #remove demogs column
+  mlst_result_df <- subset(mlst_df_clean, , select = -c(1, 2, 3,4,5))
 
 
   #use first row data as column names in r
@@ -657,10 +636,12 @@ for(i in species_list) {
 ```
 
 
+
+
 ```{r mlst_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 for(i in mlst_df_list) {
   df <- get(i)
-  df <- subset(df, select = -c(species) )
+  df <- subset(df, select = -c(species, Group) )
   names(df)[names(df) == 'wgs_id'] <- 'species'
   
   
@@ -673,6 +654,9 @@ for(i in mlst_df_list) {
     row_spec(0, background = "#D4D4D4",bold = TRUE)%>%
     column_spec(1:2, width = "3cm") %>%
     column_spec(3:9, width = "1cm") %>%
+    footnote(general ="(-) Not identified",
+           general_title = "Legend: ", 
+           footnote_as_chunk = T, title_format = c("italic"))
 
 
       
@@ -694,22 +678,23 @@ mlst_summary <- data.frame(Species=character(),
 
 for(i in mlst_df_list) {
     df <- get(i)
+    
   
     #get unique species value
-    species <- unique(df$wgs_id)
-
+    species <- unique(df$Group)
+    
     #remove from list all value with "quasi"
     species <- species[!species %in% grep("quasi", species, value = T)]
 
     #Summarize and count MLST results
-    mlst_count_df <- df %>% group_by(wgs_id,MLST) %>% summarise(count = sum(!is.na(MLST)))
+    mlst_count_df <- df %>% group_by(Group,MLST) %>% summarise(count = sum(!is.na(MLST)))
     mlst_count_df$mlst_count <- paste0(mlst_count_df$MLST, " (n= ", mlst_count_df$count, " )")
 
     #Remove empty MLST result
     #mlst_count_df  <- subset(mlst_count_df , mlst_count_df $MLST !='-')
-    mlst_count_summary  <- subset(mlst_count_df , select = c(wgs_id, mlst_count))
+    mlst_count_summary  <- subset(mlst_count_df , select = c(Group, mlst_count))
     mlst_summary_df <- mlst_count_summary %>% 
-      group_by(wgs_id) %>% 
+      group_by(Group) %>% 
       mutate(mlst_count = paste0(mlst_count, collapse = ", ")) %>%
       distinct()
     
@@ -718,6 +703,9 @@ for(i in mlst_df_list) {
     #assign(nam, mlst_summary)
     
     mlst_summary <- rbind(mlst_summary,mlst_summary_df)
+    
+    #add new data to exisiting dataframe
+    #mlst_summary[nrow(mlst_summary) + 1,] = c(species, paste0(mlst_count_df$mlst_count, collapse=", "))
   
 }
 
@@ -726,6 +714,9 @@ for(i in mlst_df_list) {
  mlst_summary_table <- kable(mlst_summary,align = "l", row.names = FALSE) %>%
     kable_styling(position = "left") %>%
     row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
+    footnote(general ="(-) Not identified",
+           general_title = "Legend: ", 
+           footnote_as_chunk = T, title_format = c("italic"))
       
   print(mlst_summary_table)
  
@@ -804,7 +795,7 @@ for(i in amr_gene_df_list) {
   df <- merge(df,wgs_species,by = "sample_id")
   
   #Change wgs_id to species
-  names(df)[names(df) == 'wgs_id'] <- 'species'
+  names(df)[names(df) == 'Group'] <- 'species'
   
   #reorder column
   df <- df %>%
@@ -824,18 +815,31 @@ for(i in amr_gene_df_list) {
   species_caption <-  species_caption[1]
   
   #subset dataframe to retain needed columns only
-  df <- subset(df, select = -c(species))
+  df <- subset(df, select = -c(species, wgs_id))
   
-  amr_gene_table <- knitr::kable(df,format='latex',booktabs = T,align = "c")%>%
+  
+  if (ncol(df) > 6){
+    
+    amr_gene_table <- knitr::kable(df,format='latex',booktabs = T,align = "c")%>%
     kable_styling(latex_options = c("HOLD_position", "scale_down")) %>%
     row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
     column_spec(2:ncol(df), width = "3cm") %>%
     add_header_above(setNames(ncol(df),species_caption),bold = TRUE, escape = FALSE, align = "l")
+    
+    print(amr_gene_table)
+  }else{
+    amr_gene_table <- knitr::kable(df,format='latex',booktabs = T,align = "c")%>%
+    kable_styling(position = "left") %>%
+    row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
+    column_spec(2:ncol(df), width = "3cm") %>%
+    add_header_above(setNames(ncol(df),species_caption),bold = TRUE, escape = FALSE, align = "l")
 
-  print(amr_gene_table)
+    print(amr_gene_table)
+  }
   
   
-  cat("\\vspace{1em}")
+
+
 
 }
 
