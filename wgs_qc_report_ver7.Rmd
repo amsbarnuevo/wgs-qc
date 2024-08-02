@@ -163,7 +163,11 @@ qc_listing_nc <- qc_listing_df %>%
 
 warning_color <- which(wgs_df$result == 'WARNING')
 failure_color <- which(wgs_df$result == 'FAILURE')
-nc_warning <- ifelse(qc_listing_nc$concordant == TRUE,"white","yellow")
+#nc_warning <- ifelse(qc_listing_nc$concordant == TRUE,"white","yellow")
+
+#condition for non-concordant
+qc_listing_df$arsrl_org <- ifelse(qc_listing_nc$concordant == TRUE,qc_listing_df$arsrl_org, paste0(qc_listing_df$arsrl_org," (x)"))
+
 
 qc_listing_df = subset(qc_listing_df, select = -c(Genus) )
 
@@ -180,7 +184,7 @@ qc_listing_df %>%
   column_spec(2, width = "2cm") %>%
   column_spec(3, width = "1.5cm") %>%
   column_spec(4, width = "5.25cm") %>%
-  column_spec(5, width = "5.25cm", background = nc_warning) %>%
+  column_spec(5, width = "5.25cm") %>%
   row_spec(warning_color, background = "#FFA77F") %>%
   row_spec(failure_color, background = "#FD7979") %>%
   row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c") %>%
@@ -188,7 +192,7 @@ qc_listing_df %>%
                         "\\\\colorbox{Peach}{WARNING}","  |  ", 
                         "\\\\colorbox{Salmon}{FAILURE}","  |  ",
                         "\\\\textcolor{Blue}{EXCEEDS THRESHOLD METRIC/S}","  |  ",
-                        "\\\\colorbox{Yellow}{NON-CONCORDANT}","  |"), 
+                        "(x) - NON-CONCORDANT","  |"), 
             general_title = "Legend:",
             footnote_as_chunk = T, escape = F)
 
