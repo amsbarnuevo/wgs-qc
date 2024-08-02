@@ -130,14 +130,14 @@
 5 & 23ARS\_CVM0039 & NGO22 & Neisseria gonorrhoeae & \cellcolor{white}{Neisseria gonorrhoeae}\\
 \addlinespace
 6 & 24ARS\_BGH0040 & SAL75 & Salmonella species & \cellcolor{white}{Salmonella enterica}\\
-7 & 24ARS\_BGH0041 & SAL76 & Salmonella species & \cellcolor{white}{Salmonella enterica subsp. enterica serovar Anatum}\\
-\cellcolor[HTML]{FFA77F}{8} & \cellcolor[HTML]{FFA77F}{24ARS\_BGH0042} & \cellcolor[HTML]{FFA77F}{SAL77} & \cellcolor[HTML]{FFA77F}{Salmonella species} & \cellcolor[HTML]{FFA77F}{Salmonella enterica subsp. enterica serovar Saintpaul}\\
-9 & 24ARS\_BGH0043 & SAL78 & Salmonella species & \cellcolor{white}{Salmonella enterica subsp. enterica serovar Infantis}\\
+7 & 24ARS\_BGH0041 & SAL76 & Salmonella species & \cellcolor{white}{Salmonella enterica}\\
+\cellcolor[HTML]{FFA77F}{8} & \cellcolor[HTML]{FFA77F}{24ARS\_BGH0042} & \cellcolor[HTML]{FFA77F}{SAL77} & \cellcolor[HTML]{FFA77F}{Salmonella species} & \cellcolor[HTML]{FFA77F}{Salmonella enterica}\\
+9 & 24ARS\_BGH0043 & SAL78 & Salmonella species & \cellcolor{white}{Salmonella enterica}\\
 \cellcolor[HTML]{FFA77F}{10} & \cellcolor[HTML]{FFA77F}{24ARS\_BGH0044} & \cellcolor[HTML]{FFA77F}{SAL79} & \cellcolor[HTML]{FFA77F}{Salmonella species} & \cellcolor[HTML]{FFA77F}{Salmonella enterica}\\
 \addlinespace
-11 & 24ARS\_BGH0045 & SAL80 & Salmonella Typhi & \cellcolor{white}{Salmonella enterica subsp. enterica serovar Typhi}\\
-12 & 24ARS\_BGH0071 & SAL81 & Salmonella species & \cellcolor{white}{Salmonella enterica subsp. enterica serovar Infantis}\\
-13 & 24ARS\_BGH0072 & SAL82 & Salmonella species & \cellcolor{white}{Salmonella enterica subsp. enterica serovar Newport}\\
+11 & 24ARS\_BGH0045 & SAL80 & Salmonella Typhi & \cellcolor{white}{Salmonella typhi}\\
+12 & 24ARS\_BGH0071 & SAL81 & Salmonella species & \cellcolor{white}{Salmonella enterica}\\
+13 & 24ARS\_BGH0072 & SAL82 & Salmonella species & \cellcolor{white}{Salmonella enterica}\\
 14 & 24ARS\_STC\_CVM0010 & satscan & Pseudomonas aeruginosa & \cellcolor{white}{Pseudomonas aeruginosa}\\
 15 & 24ARS\_STC\_CVM0011 & satscan & Pseudomonas aeruginosa & \cellcolor{white}{Pseudomonas aeruginosa}\\
 \addlinespace
@@ -258,9 +258,9 @@
 \cellcolor[HTML]{D4D4D4}{\textbf{WGS\_ID}} & \cellcolor[HTML]{D4D4D4}{\textbf{Number}}\\
 \midrule
 Pseudomonas aeruginosa & 8\\
-Salmonella enterica, nontyphoidal & 7\\
+Salmonella enterica & 7\\
 Neisseria gonorrhoeae & 5\\
-Salmonella enterica, typhoidal & 1\\
+Salmonella typhi & 1\\
 \bottomrule
 \end{longtable}
 
@@ -318,59 +318,66 @@ Salmonella enterica, typhoidal & 1\\
 
 \begin{longtable}[l]{>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}c}
 \toprule
-\cellcolor[HTML]{D4D4D4}{\textbf{sample\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{species}} & \cellcolor[HTML]{D4D4D4}{\textbf{MLST}} & \cellcolor[HTML]{D4D4D4}{\textbf{abcZ}} & \cellcolor[HTML]{D4D4D4}{\textbf{adk}} & \cellcolor[HTML]{D4D4D4}{\textbf{aroE}} & \cellcolor[HTML]{D4D4D4}{\textbf{fumC}} & \cellcolor[HTML]{D4D4D4}{\textbf{gdh}} & \cellcolor[HTML]{D4D4D4}{\textbf{pdhC}} & \cellcolor[HTML]{D4D4D4}{\textbf{pgm}}\\
+\cellcolor[HTML]{D4D4D4}{\textbf{sample\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{species}} & \cellcolor[HTML]{D4D4D4}{\textbf{MLST}} & \cellcolor[HTML]{D4D4D4}{\textbf{aroC.1.}} & \cellcolor[HTML]{D4D4D4}{\textbf{adk}} & \cellcolor[HTML]{D4D4D4}{\textbf{aroE}} & \cellcolor[HTML]{D4D4D4}{\textbf{fumC}} & \cellcolor[HTML]{D4D4D4}{\textbf{gdh}} & \cellcolor[HTML]{D4D4D4}{\textbf{pdhC}} & \cellcolor[HTML]{D4D4D4}{\textbf{pgm}}\\
 \midrule
-22ARS\_BGH0179 & Neisseria gonorrhoeae & 9364 & 435 & 39 & 67 & 158 & 148 & 71 & 65\\
-22ARS\_VSM0456 & Neisseria gonorrhoeae & 7363 & 59 & 39 & 67 & 78 & 148 & 153 & 65\\
-23ARS\_BRH0005 & Neisseria gonorrhoeae & 7823 & 435 & 39 & 170 & 111 & 148 & 153 & 65\\
-23ARS\_CVM0029 & Neisseria gonorrhoeae & - & 59 & 39 & 170 & 78 & 149 & 71 & 65\\
-23ARS\_CVM0039 & Neisseria gonorrhoeae & 10214 & 435 & 39 & 170 & 78 & 148 & 153 & 65\\
+22ARS\_BGH0179 & Neisseria gonorrhoeae & 9364 & abcZ(435) & 39 & 67 & 158 & 148 & 71 & 65\\
+22ARS\_VSM0456 & Neisseria gonorrhoeae & 7363 & abcZ(59) & 39 & 67 & 78 & 148 & 153 & 65\\
+23ARS\_BRH0005 & Neisseria gonorrhoeae & 7823 & abcZ(435) & 39 & 170 & 111 & 148 & 153 & 65\\
+23ARS\_CVM0029 & Neisseria gonorrhoeae & - & abcZ(59) & 39 & 170 & 78 & 149 & 71 & 65\\
+23ARS\_CVM0039 & Neisseria gonorrhoeae & 10214 & abcZ(435) & 39 & 170 & 78 & 148 & 153 & 65\\
 \bottomrule
 \multicolumn{10}{l}{\rule{0pt}{1em}\textit{Legend: } (-) Not identified}\\
 \end{longtable}
-\vspace{1em}
+
 \begin{longtable}[l]{>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}c}
 \toprule
-\cellcolor[HTML]{D4D4D4}{\textbf{sample\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{species}} & \cellcolor[HTML]{D4D4D4}{\textbf{MLST}} & \cellcolor[HTML]{D4D4D4}{\textbf{abcZ}} & \cellcolor[HTML]{D4D4D4}{\textbf{adk}} & \cellcolor[HTML]{D4D4D4}{\textbf{aroE}} & \cellcolor[HTML]{D4D4D4}{\textbf{fumC}} & \cellcolor[HTML]{D4D4D4}{\textbf{gdh}} & \cellcolor[HTML]{D4D4D4}{\textbf{pdhC}} & \cellcolor[HTML]{D4D4D4}{\textbf{pgm}}\\
+\cellcolor[HTML]{D4D4D4}{\textbf{sample\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{species}} & \cellcolor[HTML]{D4D4D4}{\textbf{MLST}} & \cellcolor[HTML]{D4D4D4}{\textbf{aroC.1.}} & \cellcolor[HTML]{D4D4D4}{\textbf{adk}} & \cellcolor[HTML]{D4D4D4}{\textbf{aroE}} & \cellcolor[HTML]{D4D4D4}{\textbf{fumC}} & \cellcolor[HTML]{D4D4D4}{\textbf{gdh}} & \cellcolor[HTML]{D4D4D4}{\textbf{pdhC}} & \cellcolor[HTML]{D4D4D4}{\textbf{pgm}}\\
 \midrule
-24ARS\_BGH0040 & Salmonella enterica & 4431 & 10 & 19 & 12 & 981 & 5 & 9 & 2\\
-24ARS\_BGH0041 & Salmonella enterica subsp. enterica serovar Anatum & 64 & 10 & 14 & 15 & 31 & 25 & 20 & 33\\
-24ARS\_BGH0042 & Salmonella enterica subsp. enterica serovar Saintpaul & 684 & 147 & 13 & 15 & 123 & 15 & 19 & 17\\
-24ARS\_BGH0043 & Salmonella enterica subsp. enterica serovar Infantis & 32 & 17 & 18 & 22 & 17 & 5 & 21 & 19\\
-24ARS\_BGH0044 & Salmonella enterica & - & 5,638 & 2 & 3 & 7 & 6 & 6 & 11\\
+24ARS\_BGH0040 & Salmonella enterica & 4431 & aroC(10) & 19 & 12 & 981 & 5 & 9 & 2\\
+24ARS\_BGH0041 & Salmonella enterica & 64 & aroC(10) & 14 & 15 & 31 & 25 & 20 & 33\\
+24ARS\_BGH0042 & Salmonella enterica & 684 & aroC(147) & 13 & 15 & 123 & 15 & 19 & 17\\
+24ARS\_BGH0043 & Salmonella enterica & 32 & aroC(17) & 18 & 22 & 17 & 5 & 21 & 19\\
+24ARS\_BGH0044 & Salmonella enterica & - & aroC(5,638) & 2 & 3 & 7 & 6 & 6 & 11\\
 \addlinespace
-24ARS\_BGH0071 & Salmonella enterica subsp. enterica serovar Infantis & 32 & 17 & 18 & 22 & 17 & 5 & 21 & 19\\
-24ARS\_BGH0072 & Salmonella enterica subsp. enterica serovar Newport & 46 & 10 & 7 & 21 & 12 & 15 & 12 & 12\\
+24ARS\_BGH0071 & Salmonella enterica & 32 & aroC(17) & 18 & 22 & 17 & 5 & 21 & 19\\
+24ARS\_BGH0072 & Salmonella enterica & 46 & aroC(10) & 7 & 21 & 12 & 15 & 12 & 12\\
 \bottomrule
 \multicolumn{10}{l}{\rule{0pt}{1em}\textit{Legend: } (-) Not identified}\\
 \end{longtable}
-\vspace{1em}
+
 \begin{longtable}[l]{>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}>{\centering\arraybackslash}p{1cm}c}
 \toprule
-\cellcolor[HTML]{D4D4D4}{\textbf{sample\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{species}} & \cellcolor[HTML]{D4D4D4}{\textbf{MLST}} & \cellcolor[HTML]{D4D4D4}{\textbf{abcZ}} & \cellcolor[HTML]{D4D4D4}{\textbf{adk}} & \cellcolor[HTML]{D4D4D4}{\textbf{aroE}} & \cellcolor[HTML]{D4D4D4}{\textbf{fumC}} & \cellcolor[HTML]{D4D4D4}{\textbf{gdh}} & \cellcolor[HTML]{D4D4D4}{\textbf{pdhC}} & \cellcolor[HTML]{D4D4D4}{\textbf{pgm}}\\
+\cellcolor[HTML]{D4D4D4}{\textbf{sample\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{species}} & \cellcolor[HTML]{D4D4D4}{\textbf{MLST}} & \cellcolor[HTML]{D4D4D4}{\textbf{aroC.1.}} & \cellcolor[HTML]{D4D4D4}{\textbf{adk}} & \cellcolor[HTML]{D4D4D4}{\textbf{aroE}} & \cellcolor[HTML]{D4D4D4}{\textbf{fumC}} & \cellcolor[HTML]{D4D4D4}{\textbf{gdh}} & \cellcolor[HTML]{D4D4D4}{\textbf{pdhC}} & \cellcolor[HTML]{D4D4D4}{\textbf{pgm}}\\
 \midrule
-24ARS\_STC\_CVM0010 & Pseudomonas aeruginosa & 3654 & 11 & 20 & 26 & 13 & 4 & 7 & 53\\
-24ARS\_STC\_CVM0011 & Pseudomonas aeruginosa & 3654 & 11 & 20 & 26 & 13 & 4 & 7 & 53\\
-24ARS\_STC\_CVM0012 & Pseudomonas aeruginosa & 3654 & 11 & 20 & 26 & 13 & 4 & 7 & 53\\
-24ARS\_STC\_CVM0013 & Pseudomonas aeruginosa & 3654 & 11 & 20 & 26 & 13 & 4 & 7 & 53\\
-24ARS\_STC\_CVM0014 & Pseudomonas aeruginosa & 3654 & 11 & 20 & 26 & 13 & 4 & 7 & 53\\
+24ARS\_STC\_CVM0010 & Pseudomonas aeruginosa & 3654 & acsA(11) & 20 & 26 & 13 & 4 & 7 & 53\\
+24ARS\_STC\_CVM0011 & Pseudomonas aeruginosa & 3654 & acsA(11) & 20 & 26 & 13 & 4 & 7 & 53\\
+24ARS\_STC\_CVM0012 & Pseudomonas aeruginosa & 3654 & acsA(11) & 20 & 26 & 13 & 4 & 7 & 53\\
+24ARS\_STC\_CVM0013 & Pseudomonas aeruginosa & 3654 & acsA(11) & 20 & 26 & 13 & 4 & 7 & 53\\
+24ARS\_STC\_CVM0014 & Pseudomonas aeruginosa & 3654 & acsA(11) & 20 & 26 & 13 & 4 & 7 & 53\\
 \addlinespace
-24ARS\_STC\_CVM0015 & Pseudomonas aeruginosa & 500 & 11 & 57 & 7 & 3 & 4 & 15 & 1\\
-24ARS\_STC\_CVM0016 & Pseudomonas aeruginosa & - & 19 & 5 & \textasciitilde{}1 & 61 & 55 & 12 & 3\\
-24ARS\_ZMC0002 & Pseudomonas aeruginosa & 3014 & 16 & 5 & 12 & 3 & 3 & 1 & 18\\
+24ARS\_STC\_CVM0015 & Pseudomonas aeruginosa & 500 & acsA(11) & 57 & 7 & 3 & 4 & 15 & 1\\
+24ARS\_STC\_CVM0016 & Pseudomonas aeruginosa & - & acsA(19) & 5 & \textasciitilde{}1 & 61 & 55 & 12 & 3\\
+24ARS\_ZMC0002 & Pseudomonas aeruginosa & 3014 & acsA(16) & 5 & 12 & 3 & 3 & 1 & 18\\
 \bottomrule
 \multicolumn{10}{l}{\rule{0pt}{1em}\textit{Legend: } (-) Not identified}\\
 \end{longtable}
-\vspace{1em}
+
+\begin{longtable}[l]{ccc}
+\toprule
+\cellcolor[HTML]{D4D4D4}{\textbf{sample\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{wgs\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{species}}\\
+\midrule
+24ARS\_BGH0045 & Salmonella typhi & No MLST result\\
+\bottomrule
+\end{longtable}
 
 \subsubsection{MLST RESULTS SUMMARY:}\label{mlst-results-summary}
 
 \begin{longtable}[l]{ll}
 \toprule
-\cellcolor[HTML]{D4D4D4}{\textbf{Group}} & \cellcolor[HTML]{D4D4D4}{\textbf{mlst\_count}}\\
+\cellcolor[HTML]{D4D4D4}{\textbf{wgs\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{mlst\_count}}\\
 \midrule
 Neisseria gonorrhoeae & - (n= 1 ), 10214 (n= 1 ), 7363 (n= 1 ), 7823 (n= 1 ), 9364 (n= 1 )\\
-Salmonella enterica, nontyphoidal & - (n= 1 ), 32 (n= 2 ), 4431 (n= 1 ), 46 (n= 1 ), 64 (n= 1 ), 684 (n= 1 )\\
+Salmonella enterica & - (n= 1 ), 32 (n= 2 ), 4431 (n= 1 ), 46 (n= 1 ), 64 (n= 1 ), 684 (n= 1 )\\
 Pseudomonas aeruginosa & - (n= 1 ), 3014 (n= 1 ), 3654 (n= 5 ), 500 (n= 1 )\\
 \bottomrule
 \multicolumn{2}{l}{\rule{0pt}{1em}\textit{Legend: } (-) Not identified}\\
@@ -378,6 +385,10 @@ Pseudomonas aeruginosa & - (n= 1 ), 3014 (n= 1 ), 3654 (n= 5 ), 500 (n= 1 )\\
 
 \newpage
 \begin{landscape}
+\fontsize{7}{8}
+\selectfont
+\captionsetup[table]{labelformat=empty}
+\renewcommand{\arraystretch}{1.2}
 
 \subsubsection{AMR PREDICTION RESULTS}\label{amr-prediction-results}
 
@@ -399,7 +410,7 @@ Pseudomonas aeruginosa & - (n= 1 ), 3014 (n= 1 ), 3654 (n= 5 ), 500 (n= 1 )\\
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \begin{tabular}{c>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}}
 \toprule
-\multicolumn{27}{l}{\textbf{\textit{Salmonella enterica, nontyphoidal}}} \\
+\multicolumn{27}{l}{\textbf{\textit{Salmonella enterica}}} \\
 \cmidrule(l{3pt}r{3pt}){1-27}
 \cellcolor[HTML]{D4D4D4}{\textbf{sample\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR APRAMYCIN/ GENTAMICIN/ TOBRAMYCIN}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR BETA-LACTAM}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR CEPHALOSPORIN}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR CHLORAMPHENICOL/ FLORFENICOL}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR EFFLUX}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR HYGROMYCIN}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR KANAMYCIN}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR LINCOSAMIDE}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR QUINOLONE}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR STREPTOMYCIN}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR SULFONAMIDE}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR TETRACYCLINE}} & \cellcolor[HTML]{D4D4D4}{\textbf{AMR TRIMETHOPRIM}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS ARSENATE}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS ARSENIC}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS ARSENITE}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS COPPER}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS COPPER/ GOLD}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS COPPER/ SILVER}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS GOLD}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS MERCURY}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS NA}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS ORGANOMERCURY}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS QUATERNARY AMMONIUM}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS SILVER}} & \cellcolor[HTML]{D4D4D4}{\textbf{VIRULENCE NA}}\\
 \midrule
@@ -414,6 +425,16 @@ Pseudomonas aeruginosa & - (n= 1 ), 3014 (n= 1 ), 3654 (n= 5 ), 500 (n= 1 )\\
 \bottomrule
 \end{tabular}}
 \end{table}
+
+\begin{tabular}{c>{\centering\arraybackslash}p{3cm}>{\centering\arraybackslash}p{3cm}}
+\toprule
+\multicolumn{3}{l}{\textbf{\textit{Salmonella typhi}}} \\
+\cmidrule(l{3pt}r{3pt}){1-3}
+\cellcolor[HTML]{D4D4D4}{\textbf{sample\_id}} & \cellcolor[HTML]{D4D4D4}{\textbf{STRESS NA}} & \cellcolor[HTML]{D4D4D4}{\textbf{VIRULENCE NA}}\\
+\midrule
+24ARS\_BGH0045 & fieF & iroB, sinH, iroC, cdtB\\
+\bottomrule
+\end{tabular}
 \begin{table}[H]
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{

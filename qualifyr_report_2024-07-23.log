@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  1 AUG 2024 15:21
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 23.10.12) (preloaded format=xelatex 2023.11.30)  2 AUG 2024 08:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1556,14 +1556,14 @@ Underfull \hbox (badness 10000) in paragraph at lines 170--171
 
 LaTeX Font Info:    Font shape `TU/Helvetica(0)/m/n' will be
 (Font)              scaled to size 5.0pt on input line 220.
-[1
 
-]
 Overfull \hbox (2.14119pt too wide) in alignment at lines 229--239
  [] [] [] 
  []
 
+[1
 
+]
 Underfull \hbox (badness 10000) in paragraph at lines 275--277
 
  []
@@ -1598,8 +1598,33 @@ Overfull \hbox (2.14119pt too wide) in alignment at lines 308--315
  []
 
 [4]
+Overfull \hbox (3.45058pt too wide) in paragraph at lines 323--323
+ []|\TU/Helvetica(0)/m/n/7 abcZ(435)| 
+ []
+
+
+Overfull \hbox (3.45058pt too wide) in paragraph at lines 325--325
+ []|\TU/Helvetica(0)/m/n/7 abcZ(435)| 
+ []
+
+
+Overfull \hbox (3.45058pt too wide) in paragraph at lines 327--327
+ []|\TU/Helvetica(0)/m/n/7 abcZ(435)| 
+ []
+
+
 Overfull \hbox (15.55873pt too wide) in alignment at lines 319--330
 [] [] [] [] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (3.06093pt too wide) in paragraph at lines 338--338
+ []|\TU/Helvetica(0)/m/n/7 aroC(147)| 
+ []
+
+
+Overfull \hbox (8.89882pt too wide) in paragraph at lines 340--340
+ []|\TU/Helvetica(0)/m/n/7 aroC(5,638)| 
  []
 
 
@@ -1614,20 +1639,20 @@ Overfull \hbox (15.55873pt too wide) in alignment at lines 348--363
 
 [5]
 LaTeX Font Info:    Font shape `TU/Helvetica(0)/b/it' will be
-(Font)              scaled to size 7.0pt on input line 386.
+(Font)              scaled to size 7.0pt on input line 397.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 12.14584pt on input line 415.
+(Font)              scaled to size 12.14584pt on input line 426.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 12.1434pt on input line 415.
+(Font)              scaled to size 12.1434pt on input line 426.
 LaTeX Font Info:    Font shape `TU/Helvetica(0)/b/it' will be
-(Font)              scaled to size 10.0pt on input line 415.
+(Font)              scaled to size 10.0pt on input line 426.
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 415--415
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 426--426
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
 
-Overfull \hbox (1.87318pt too wide) in paragraph at lines 436--436
+Overfull \hbox (1.87318pt too wide) in paragraph at lines 457--457
  \TU/Helvetica(0)/b/n/10 CEPHALOSPORIN| 
  []
 
@@ -1640,12 +1665,12 @@ L3 programming layer <2023-11-09>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 21930 strings out of 409717
- 395479 string characters out of 5774923
- 2009189 words of memory out of 5000000
- 43629 multiletter control sequences out of 15000+600000
+ 21931 strings out of 409717
+ 395484 string characters out of 5774923
+ 2013189 words of memory out of 5000000
+ 43630 multiletter control sequences out of 15000+600000
  565011 words of font info for 100 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 90i,13n,122p,1501b,457s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,13n,122p,1501b,437s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on qualifyr_report_2024-07-23.pdf (7 pages).

@@ -72,11 +72,11 @@ wgs_df$ORG[grepl("Shigella",wgs_df$wgs_id)] = "shi"
 wgs_df$ORG[grepl("Vibrio",wgs_df$wgs_id)] = "vic"
 
 #identify organism groups
-wgs_df$Group <- ifelse((wgs_df$ORG == 'sal' & wgs_df$wgs_id == 'Salmonella enterica subsp. enterica serovar Typhi'),"Salmonella enterica, typhoidal", ifelse((wgs_df$ORG == 'sal' & wgs_df$wgs_id != 'Salmonella enterica subsp. enterica serovar Typhi'),"Salmonella enterica, nontyphoidal", wgs_df$wgs_id))
+wgs_df$wgs_id <- ifelse((wgs_df$ORG == 'sal' & wgs_df$wgs_id == 'Salmonella enterica subsp. enterica serovar Typhi'),"Salmonella typhi", ifelse((wgs_df$ORG == 'sal' & wgs_df$wgs_id != 'Salmonella enterica subsp. enterica serovar Typhi'),"Salmonella enterica", wgs_df$wgs_id))
 
 
 #identify salmonella typhi and salmonella nontyphi
-wgs_df$ORG <- ifelse((wgs_df$ORG == 'sal' & wgs_df$Group == 'Salmonella enterica, typhoidal'), 'sat', wgs_df$ORG)
+wgs_df$ORG <- ifelse((wgs_df$ORG == 'sal' & wgs_df$wgs_id == 'Salmonella typhi'), 'sat', wgs_df$ORG)
 
 
 wgs_df$warning_count <- ifelse(wgs_df$check_result == 'WARNING',1,
@@ -139,7 +139,7 @@ wgs_df <- merge(unique(wgs_df), unique(wgs_samplesheet_good), by = "sample_id", 
 #arsrl_result_df$sample_id <- gsub("_", "\\_", arsrl_result_df$sample_id, fixed=TRUE)
 #wgs_df$sample_id <- gsub("_", "\\_", wgs_df$sample_id, fixed=TRUE)
 
-retain_column <- c('iso_num','sample_id','wgs_id','description','Group')
+retain_column <- c('iso_num','sample_id','wgs_id','description')
 wgs_result_df <- subset(wgs_df, select = retain_column)
 
 
@@ -169,13 +169,12 @@ qc_listing_df = subset(qc_listing_df, select = -c(Genus) )
 
 #qc_listing_df$iso_num <- seq.int(nrow(qc_listing_df))
 
-colnames(qc_listing_df) <- c('Sample ID','ARSRL','Isolate No.','WGS','Description','Group')
+colnames(qc_listing_df) <- c('Sample ID','ARSRL','Isolate No.','WGS','Description')
 
-qc_listing_df1 = subset(qc_listing_df, select = -c(Group) )
 
-qc_listing_df1 <- qc_listing_df1[, c(3,1,5,2,4)] 
+qc_listing_df <- qc_listing_df[, c(3,1,5,2,4)] 
 
-qc_listing_df1 %>% 
+qc_listing_df %>% 
   kable(booktabs = T, align = "c", escape = FALSE)%>%
   column_spec(1, width = "1cm") %>%
   column_spec(2, width = "2cm") %>%
@@ -359,7 +358,7 @@ if (nrow(QC_failed) > 0) {
 
 
 ```{r qc listing summary narrative, echo=FALSE, message=FALSE, warning=FALSE}
-qc_summary_df <- qc_listing_df %>% group_by(Group) %>% summarise(number = sum(!is.na(WGS)))
+qc_summary_df <- qc_listing_df %>% group_by(WGS) %>% summarise(number = sum(!is.na(WGS)))
 qc_summary_df <- qc_summary_df[order(-qc_summary_df$number),]
 
 qc_tl <- nrow(qc_listing_df)
@@ -411,7 +410,7 @@ $\\$
 
 ```{r pie_chart, echo=FALSE, message=FALSE, warning=FALSE}
 # Calculate the counts for each "wgs_id"
-wgs_id_count <- table(wgs_df$Group)
+wgs_id_count <- table(wgs_df$wgs_id)
 
 # Create a data frame with "wgs_id" and their counts
 wgs_count_df <- data.frame(wgs_id = names(wgs_id_count), Frequency = as.vector(wgs_id_count))
@@ -584,16 +583,15 @@ mlst_df_clean$sample_id <- sub("\\..*", "", mlst_df_clean$sample_id)
 mlst_df_clean$sample_id <- gsub("-", "_", mlst_df_clean$sample_id, fixed=TRUE)
 
 #merge wgs_id from wgs_df to mlst_df to set as species value
-wgs_species <- subset(wgs_df, , select = c("sample_id", "wgs_id", "Group"))
+wgs_species <- subset(wgs_df, , select = c("sample_id", "wgs_id"))
 mlst_df_clean <- merge(mlst_df_clean,wgs_species,by = "sample_id")
 
 #reorder column
 mlst_df_clean <- mlst_df_clean %>% 
-  relocate(wgs_id, .after = species) %>%
-  relocate(Group, .after = wgs_id)
+  relocate(wgs_id, .after = species)
 
 #identify salmonella enterica group
-mlst_df_clean$species <- ifelse(mlst_df_clean$Group == 'Salmonella enterica, nontyphoidal', 'salmonella_enterica_nontyphoidal', ifelse(mlst_df_clean$Group == 'Salmonella enterica, typhoidal','salmonella_enterica_typhoidal', mlst_df_clean$species))
+mlst_df_clean$species <- ifelse(mlst_df_clean$wgs_id == 'Salmonella enterica', 'salmonella_enterica', ifelse(mlst_df_clean$wgs_id == 'Salmonella typhoidal','salmonella_typhoidal', mlst_df_clean$species))
 
 #list unique species in the dataframe
 species_list <- unique(mlst_df_clean$species)
@@ -639,9 +637,14 @@ for(i in species_list) {
 
 
 ```{r mlst_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+#list existing sample_id in the mlst table
+not_included <- wgs_df$wgs_id[!(wgs_df$wgs_id %in% mlst_df_clean$wgs_id)]
+
+  
 for(i in mlst_df_list) {
   df <- get(i)
-  df <- subset(df, select = -c(species, Group) )
+  
+  df <- subset(df, select = -c(species) )
   names(df)[names(df) == 'wgs_id'] <- 'species'
   
   
@@ -661,10 +664,35 @@ for(i in mlst_df_list) {
 
       
   print(mlst_table)
-  
-  cat("\\vspace{1em}")
 
 }
+
+```
+
+
+
+```{r no_mlst_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+#list existing sample_id in the mlst table
+not_included <- wgs_df$wgs_id[!(wgs_df$wgs_id %in% mlst_df_clean$wgs_id)]
+
+if (length(not_included) !=0){
+  sample_id <- wgs_df$sample_id[!(wgs_df$sample_id %in% mlst_df_clean$sample_id)]
+  wgs_id <- not_included
+  species <- "No MLST result"
+  
+  df <- data.frame(sample_id, wgs_id, species)
+  
+  no_mlst_table <- kable(df,align = "c", row.names = FALSE) %>%
+    kable_styling(position = "left") %>%
+    row_spec(0, background = "#D4D4D4",bold = TRUE)
+   
+
+
+  print(no_mlst_table)
+  
+}
+
+
 
 ```
 
@@ -681,20 +709,20 @@ for(i in mlst_df_list) {
     
   
     #get unique species value
-    species <- unique(df$Group)
+    species <- unique(df$wgs_id)
     
     #remove from list all value with "quasi"
     species <- species[!species %in% grep("quasi", species, value = T)]
 
     #Summarize and count MLST results
-    mlst_count_df <- df %>% group_by(Group,MLST) %>% summarise(count = sum(!is.na(MLST)))
+    mlst_count_df <- df %>% group_by(wgs_id,MLST) %>% summarise(count = sum(!is.na(MLST)))
     mlst_count_df$mlst_count <- paste0(mlst_count_df$MLST, " (n= ", mlst_count_df$count, " )")
 
     #Remove empty MLST result
     #mlst_count_df  <- subset(mlst_count_df , mlst_count_df $MLST !='-')
-    mlst_count_summary  <- subset(mlst_count_df , select = c(Group, mlst_count))
+    mlst_count_summary  <- subset(mlst_count_df , select = c(wgs_id, mlst_count))
     mlst_summary_df <- mlst_count_summary %>% 
-      group_by(Group) %>% 
+      group_by(wgs_id) %>% 
       mutate(mlst_count = paste0(mlst_count, collapse = ", ")) %>%
       distinct()
     
@@ -729,7 +757,10 @@ for(i in mlst_df_list) {
 
 \newpage
 \blandscape
-
+\fontsize{7}{8}
+\selectfont
+\captionsetup[table]{labelformat=empty}
+\renewcommand{\arraystretch}{1.2}
 
 ### AMR PREDICTION RESULTS
 
@@ -745,12 +776,14 @@ AMR_df$sample_id <- gsub("-", "_", AMR_df$sample_id, fixed=TRUE)
 AMR_df <- merge(AMR_df,wgs_species,by = "sample_id")
 
 
+amr_genes_species <- unique(AMR_df$wgs_id)
 
 #vector to hold list of amr gene datables
 amr_gene_df_list = c()
 
-for(i in mlst_df_list) {
-  df <- get(i)
+
+for(i in amr_genes_species) {
+  df <- subset(AMR_df, AMR_df$wgs_id == i)
   sample_id <- c(df$sample_id)
   
   #create new dataframe to duplicate AMR_df
@@ -774,8 +807,7 @@ for(i in mlst_df_list) {
   amr_genes_df <- amr_genes_df  %>%
     pivot_wider(names_from = Newcols,
                 values_from = Concat)
-  
-  
+
   #assign new name to dataframe
   nam <- paste("amr", i, sep = "_")
   assign(nam, amr_genes_df[amr_genes_df$sample_id %in% sample_id, ])
@@ -795,7 +827,7 @@ for(i in amr_gene_df_list) {
   df <- merge(df,wgs_species,by = "sample_id")
   
   #Change wgs_id to species
-  names(df)[names(df) == 'Group'] <- 'species'
+  names(df)[names(df) == 'wgs_id'] <- 'species'
   
   #reorder column
   df <- df %>%
@@ -815,7 +847,7 @@ for(i in amr_gene_df_list) {
   species_caption <-  species_caption[1]
   
   #subset dataframe to retain needed columns only
-  df <- subset(df, select = -c(species, wgs_id))
+  df <- subset(df, select = -c(species))
   
   
   if (ncol(df) > 6){
@@ -838,12 +870,35 @@ for(i in amr_gene_df_list) {
   }
   
   
-
-
-
 }
 
 ```
+
+
+
+```{r no_amr_genes_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+#list existing sample_id in the mlst table
+not_included <- wgs_df$wgs_id[!(wgs_df$wgs_id %in% AMR_df$wgs_id)]
+not_included <- unique(not_included)
+  
+if (length(not_included) !=0){
+  sample_id <- wgs_df$sample_id[!(wgs_df$sample_id %in% AMR_df$sample_id)]
+  sample_id <- unique(sample_id)
+  species<- not_included
+  remarks <- "No AMR determinant detected"
+  
+  df <- data.frame(sample_id, wgs_id, species)
+  
+  no_amr_table <- kable(df,align = "c", row.names = FALSE) %>%
+    kable_styling(position = "left") %>%
+    row_spec(0, background = "#D4D4D4",bold = TRUE)
+
+
+  print(no_amr_table)
+  
+}
+```
+
 
 
 \elandscape
