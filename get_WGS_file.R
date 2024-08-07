@@ -107,6 +107,21 @@ query <- paste("SELECT * from wgs_app_referreddb
 df <- dbSendQuery(con, query)
 
 result <- dbFetch(df)
+
+
+
+
+
+#Manual retreival of result
+result <- read_xlsx("data_files/2024 Referred Isolates 8.1.2024.xlsx", sheet = 'ARSRL' )
+result <- subset(result, select = c(accession_no,arsrl_org))
+result <- result[result$accession_no %in% wgs_df$sample_id, ]
+
+
+
+
+
+
 result <- result %>% mutate_all(as.character)
 result <- result %>% mutate_all(~as.character(ifelse(. == "nan", "", .)))
 
