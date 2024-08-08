@@ -88,7 +88,7 @@ id_list <- gsub("\\_", "_", id_list)
 
 # Connect to db
 con <- dbConnect(RPostgres::Postgres(),dbname = 'WGS_DB', 
-                 host = '10.10.24.163', # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
+                 host = '10.10.103.163', # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
                  port = 5432, # or any other port specified by your DBA
                  user = 'postgres',
                  password = 'secret123')
@@ -107,21 +107,6 @@ query <- paste("SELECT * from wgs_app_referreddb
 df <- dbSendQuery(con, query)
 
 result <- dbFetch(df)
-
-
-
-
-
-#Manual retreival of result
-result <- read_xlsx("data_files/2024 Referred Isolates 8.1.2024.xlsx", sheet = 'ARSRL' )
-result <- subset(result, select = c(accession_no,arsrl_org))
-result <- result[result$accession_no %in% wgs_df$sample_id, ]
-
-
-
-
-
-
 result <- result %>% mutate_all(as.character)
 result <- result %>% mutate_all(~as.character(ifelse(. == "nan", "", .)))
 

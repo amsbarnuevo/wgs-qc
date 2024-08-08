@@ -525,10 +525,10 @@ $\\$
 
 ### RECOMMENDATION:
 ```{r recommendation table ,echo=FALSE, message=FALSE, warning=FALSE}
-if (nrow(wgs_lowreads) != 0 ){
-  sample_id <- c("24ARS_NKI0054", "22ARS_VSM0456")
+if ((nrow(wgs_lowreads) != 0 ) | (nrow(QC_failed) != 0 ) ){
+  sample_id <- c("24ARS_VSM0001", "24ARS_VSM0093")
   action <- c("Repeat testing", "Repeat testing")
-  reason <- c("Low read count", "QC failure (high contigs)")
+  reason <- c("QC failure (high contigs & N50 value)", "QC failure (high contigs & N50 value)")
   reco_table <- data.frame(sample_id,action, reason)
   
   colnames(reco_table) <- c('Sample ID','Action','Reason')
@@ -745,6 +745,8 @@ for(i in mlst_df_list) {
 #Print table
  mlst_summary_table <- kable(mlst_summary,align = "l", row.names = FALSE) %>%
     kable_styling(position = "left") %>%
+    column_spec(1, width = "6cm") %>%
+    column_spec(2, width = "10cm") %>%
     row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
     footnote(general ="(-) Not identified",
            general_title = "Legend: ", 
