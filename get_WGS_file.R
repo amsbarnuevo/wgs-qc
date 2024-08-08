@@ -10,7 +10,10 @@ library(DBI)
 library(svDialogs)
 library(xlsx)
 library(writexl)
+library(conflicted)
 
+conflicts_prefer(openxlsx::write.xlsx)
+conflicts_prefer(dplyr::filter)
 
 setwd("D:/ALLYSA FILE/2024/DMU Projects/wgs-qc")
 
@@ -109,6 +112,8 @@ df <- dbSendQuery(con, query)
 result <- dbFetch(df)
 result <- result %>% mutate_all(as.character)
 result <- result %>% mutate_all(~as.character(ifelse(. == "nan", "", .)))
+
+result$arsrl_org <- gsub("\\*", "",result$arsrl_org)
 
 #result <- read_xlsx("data_files/result.xlsx")
 

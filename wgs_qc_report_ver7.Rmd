@@ -52,6 +52,10 @@ library(DBI)
 library(svDialogs)
 library(xlsx)
 library(writexl)
+library(conflicted)
+
+conflicts_prefer(openxlsx::write.xlsx)
+conflicts_prefer(dplyr::filter)
 ```
 
 
@@ -456,7 +460,8 @@ ggplot(data = wgs_df, aes(x = ORG, fill = result)) +
   scale_fill_manual(values = result_colors) + # Apply the defined colors
   ylab("Frequency") +
   xlab("Organisms") +
-  guides(fill = FALSE) #+  # Hide the legend for the 'result' variable
+  guides(fill = FALSE) +  # Hide the legend for the 'result' variable
+  scale_y_continuous(breaks= pretty_breaks())
   #theme_minimal()
 ```
 
@@ -526,9 +531,9 @@ $\\$
 ### RECOMMENDATION:
 ```{r recommendation table ,echo=FALSE, message=FALSE, warning=FALSE}
 if ((nrow(wgs_lowreads) != 0 ) | (nrow(QC_failed) != 0 ) ){
-  sample_id <- c("24ARS_VSM0001", "24ARS_VSM0093")
-  action <- c("Repeat testing", "Repeat testing")
-  reason <- c("QC failure (high contigs & N50 value)", "QC failure (high contigs & N50 value)")
+  sample_id <- c("No futher action required for this batch")
+  action <- c("")
+  reason <- c("")
   reco_table <- data.frame(sample_id,action, reason)
   
   colnames(reco_table) <- c('Sample ID','Action','Reason')
