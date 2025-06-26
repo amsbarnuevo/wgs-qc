@@ -1,67 +1,31 @@
 library(tidyverse)
 library(knitr)
 library(readxl)
+library(dplyr)
 library(kableExtra)
 library(RColorBrewer)
 library(scales)
 library(readr)
 library(DBI)
 library(svDialogs)
+library(xlsx)
 library(writexl)
 library(conflicted)
 
 conflicts_prefer(openxlsx::write.xlsx)
 conflicts_prefer(dplyr::filter)
 
-setwd("E:/DMU Projects/wgs-qc")
+setwd("D:/ALLYSA FILE/2024/DMU Projects/wgs-qc")
 
 #Get the WGS QC File
 get_batchname <- dlgInput("Enter batch number:", Sys.info()[" "])$res
 get_samplesheet <- dlgInput("Enter sample sheet file name:", Sys.info()[" "])$res
-num_qr <- dlgInput("Enter number of quality reports :", Sys.info()[" "])$res
-quality_report_num <- as.numeric(num_qr) - 1
 
-
-if(quality_report_num > 1){
-  get_file <- paste0("data_files/",get_batchname,"/quality_report.tsv")
-  quality_report <- read.delim(file= get_file)
-  
-  get_file <- paste0("data_files/",get_batchname,"/bactopia-report.tsv")
-  bactopia_report <- read.delim(file= get_file)
-  
-  
-  
-  for (i in 1:quality_report_num) {
-    quality_report <- quality_report
-    
-    get_file <- paste0("data_files/",get_batchname,"/quality_report",i,".tsv")
-    qr_df <- read.delim(file= get_file)
-    
-    qr_df$Name <- gsub(".fna", "", qr_df$Name, fixed=TRUE)
-    
-    get_file <- paste0("data_files/",get_batchname,"/bactopia-report",i,".tsv")
-    br_df <- read.delim(file= get_file)
-    
-    
-    df <- cbind()
-    
-    quality_report <- rbind(quality_report, df)
-    
-  }
-  
-  
-}
-
-
-
-
-
-
-
-
+get_file <- paste("data_files/qualifyr_report.tsv")
+wgs_df <- read.delim(file= get_file)
 
 wgs_df$sample_name <- gsub("-", "_", wgs_df$sample_name, fixed=TRUE)
-wgs_df$sample_name <- toupper(wgs_df$sample_name)
+
 
 #get MLST and AMR Genes tsv files
 get_mlst <- paste("data_files/mlst.tsv")
@@ -177,14 +141,21 @@ if(utp_sample_count !=0){
 
 #manually add result for STC
 if(stc_sample_count !=0){
-  stc_df <- read_xlsx("data_files/ARSRL_SatScan_Results.xlsx")
-  stc_df <- stc_df[stc_df$sample_id %in% stc_sample, ]
+  sample_name = stc_sample
+  sample_name <- gsub("STC", "STC_", sample_name, fixed=TRUE)
+  arsrl_org = "Pseudomonas aeruginosa"
   
-  stc_df$sample_id <- gsub("STC", "STC_", stc_df$sample_id, fixed=TRUE)
+  arsrl_result_df <- result %>% 
+    add_row(sample_name = sample_name, arsrl_org=arsrl_org)
   
-  arsrl_result_df <- rbind(arsrl_result_df,stc_df)
-
+  arsrl_result_df <- subset(arsrl_result_df , select = c(sample_name,arsrl_org))
+  colnames(arsrl_result_df) <- c('sample_id','arsrl_org') 
+  
+}else{
+  arsrl_result_df <- subset(result , select = c(sample_name,arsrl_org))
+  colnames(arsrl_result_df) <- c('sample_id','arsrl_org') 
 }
+
 
 
 #Check if QC_BBR sample is present in the id list
@@ -193,13 +164,20 @@ bbr_sample_count <- length(bbr_sample)
 
 #manually add result for QC_BBR
 if(bbr_sample_count !=0){
-  sample_id = bbr_sample
+  sample_name = bbr_sample
   arsrl_org = "Bordetella bronchiseptica"
   
-  arsrl_result_df <- arsrl_result_df %>% 
-    add_row(sample_id = sample_id, arsrl_org=arsrl_org)
-
+  arsrl_result_df <- result %>% 
+    add_row(sample_name = sample_name, arsrl_org=arsrl_org)
+  
+  arsrl_result_df <- subset(arsrl_result_df , select = c(sample_name,arsrl_org))
+  colnames(arsrl_result_df) <- c('sample_id','arsrl_org') 
+  
+}else{
+  arsrl_result_df <- subset(result , select = c(sample_name,arsrl_org))
+  colnames(arsrl_result_df) <- c('sample_id','arsrl_org') 
 }
+
 
 
 #wgs_df <- read_xlsx("wgs_df_2024-05-03.xlsx")

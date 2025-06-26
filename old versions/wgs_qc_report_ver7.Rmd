@@ -74,6 +74,7 @@ wgs_df$iso_num <- seq.int(nrow(wgs_df))
 wgs_df$ORG[grepl("Salmonella",wgs_df$wgs_id)] = "sal"
 wgs_df$ORG[grepl("Shigella",wgs_df$wgs_id)] = "shi"
 wgs_df$ORG[grepl("Vibrio",wgs_df$wgs_id)] = "vic"
+#wgs_df$ORG[grepl("Burkholderia cenocepacia",wgs_df$wgs_id)] = "pce"
 
 #identify organism groups
 wgs_df$wgs_id <- ifelse((wgs_df$ORG == 'sal' & wgs_df$wgs_id == 'Salmonella enterica subsp. enterica serovar Typhi'),"Salmonella typhi", ifelse((wgs_df$ORG == 'sal' & wgs_df$wgs_id != 'Salmonella enterica subsp. enterica serovar Typhi'),"Salmonella enterica", wgs_df$wgs_id))
@@ -185,10 +186,10 @@ qc_listing_df <- qc_listing_df[, c(3,1,5,2,4)]
 qc_listing_df %>% 
   kable(booktabs = T, align = "c", escape = FALSE)%>%
   column_spec(1, width = "1cm") %>%
-  column_spec(2, width = "2cm") %>%
+  column_spec(2, width = "2.5cm") %>%
   column_spec(3, width = "1.5cm") %>%
-  column_spec(4, width = "5.25cm") %>%
-  column_spec(5, width = "5.25cm") %>%
+  column_spec(4, width = "5cm") %>%
+  column_spec(5, width = "5cm") %>%
   row_spec(warning_color, background = "#FFA77F") %>%
   row_spec(failure_color, background = "#FD7979") %>%
   row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c") %>%
@@ -530,10 +531,10 @@ $\\$
 
 ### RECOMMENDATION:
 ```{r recommendation table ,echo=FALSE, message=FALSE, warning=FALSE}
-if ((nrow(wgs_lowreads) != 0 ) | (nrow(QC_failed) != 0 ) ){
-  sample_id <- c("No futher action required for this batch")
-  action <- c("")
-  reason <- c("")
+if ((nrow(wgs_lowreads) != 0 ) | (nrow(QC_failed) != 0)){
+  sample_id <- c("24ARS_DMC0235","24ARS_VSM0093")
+  action <- c("For repeat testing","For repeat testing")
+  reason <- c("Low read count","Low N50")
   reco_table <- data.frame(sample_id,action, reason)
   
   colnames(reco_table) <- c('Sample ID','Action','Reason')
@@ -562,14 +563,6 @@ if ((nrow(wgs_lowreads) != 0 ) | (nrow(QC_failed) != 0 ) ){
     column_spec(3, width = "6cm") %>%
     row_spec(0, background = "#D4D4D4",bold = TRUE)
 }
-
-
-
-
-
-
-
-
 
 ```
 
@@ -763,17 +756,15 @@ for(i in mlst_df_list) {
 
 
 
-
-
-
 \newpage
-\blandscape
+\begin{landscape}
 \fontsize{7}{8}
 \selectfont
 \captionsetup[table]{labelformat=empty}
 \renewcommand{\arraystretch}{1.2}
 
-### AMR PREDICTION RESULTS
+
+\normalsize\textbf{AMR PREDICTION RESULTS}\textbf\normalsize
 
 ```{r amr_genes ,echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -911,6 +902,5 @@ if (length(not_included) !=0){
 ```
 
 
-
-\elandscape
+\end{landscape}
 
