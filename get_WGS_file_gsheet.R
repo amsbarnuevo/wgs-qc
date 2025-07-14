@@ -24,13 +24,16 @@ sheet_id <- "1rOFp9VHXeAfghFU6aOOBeBSt9Q1RC5WVAdLez4HHLU4"
 
 # Read the sheet
 df_batch <- read_sheet(sheet_id, sheet = "batch")
-df_qualifyr <- read_sheet(sheet_id, sheet = "qualifyr")
 df_gambit <- read_sheet(sheet_id, sheet = "gambit")
-df_bactopia <- read_sheet(sheet_id, sheet = "bactopia-report")
+df_fastp <- read_sheet(sheet_id, sheet = "fastp_summary")
 df_assembly <- read_sheet(sheet_id, sheet = "assembly-scan")
 df_checkm2 <- read_sheet(sheet_id, sheet = "checkm2")
 df_mlst <- read_sheet(sheet_id, sheet = "mlst")
 df_amrfinderplus <- read_sheet(sheet_id, sheet = "amrfinderplus")
+
+# Read referred database
+referred_sheet_id <- "1JKtyRyLh0-ck2xCk0oIH4iidgs21996UKj69lvvlXAU"
+referred_df <- read_sheet(referred_sheet_id, sheet = 1)
 
 
 # enter batch code
@@ -54,7 +57,7 @@ sample_name_clean <- sub("(.*)_[^_]*$", "\\1", sample_name)
 #rename column
 colnames(df_gambit)[which(names(df_gambit) == "sample")] <- "name"
 colnames(df_assembly)[which(names(df_assembly) == "sample")] <- "name"
-colnames(df_bactopia)[which(names(df_bactopia) == "sample")] <- "name"
+colnames(df_fastp)[which(names(df_fastp) == "sample")] <- "name"
 
 
 #checkm2 column names to lower
@@ -65,7 +68,10 @@ df_checkm2$name <- gsub(".fna", "", df_checkm2$name, fixed=TRUE)
 
 
 # Get species name
-df_gambit$species <- ifelse(is.na(df_gambit$predicted.rank) | df_gambit$predicted.rank == "genus", df_gambit$next.name, df_gambit$predicted.name)
+df_gambit$species <- case_when(
+  df_gambit$predicted.rank == "species" ~ df_gambit$predicted.name,
+  TRUE ~ df_gambit$next.name
+)
 
 
 # Compute total GC Content
@@ -77,12 +83,12 @@ df_assembly$gc_content <- as.numeric(df_assembly$contig_percent_g) + as.numeric(
 gambit_sub_df <- subset(df_gambit, select = c(name, species))
 checkm2_sub_df <- subset(df_checkm2, select = c(name, completeness, contamination))
 assembly_sub_df <- subset(df_assembly, select = c(name, total_contig, total_contig_length, gc_content, n50_contig_length))
-bactopia_sub_df <- subset(df_bactopia, select = c(name, qc_original_total_bp, qc_final_qual_mean))
+fastp_sub_df <- subset(df_fastp, select = c(name, after_total_bases, combined_qual_mean))
 
 
 
 # put all data frames into list
-df_list <- list(gambit_sub_df, checkm2_sub_df, assembly_sub_df, bactopia_sub_df)
+df_list <- list(gambit_sub_df, checkm2_sub_df, assembly_sub_df, fastp_sub_df)
 
 # merge all data frames in list
 wgs_df <- df_list %>% reduce(full_join, by='name')
@@ -114,8 +120,7 @@ if (stc_sample_count !=0){
 
 
 
-referred_sheet_id <- "1JKtyRyLh0-ck2xCk0oIH4iidgs21996UKj69lvvlXAU"
-referred_df <- read_sheet(referred_sheet_id, sheet = 1)
+
 referred_df <- subset(referred_df, select = c(accession_no,arsrl_org))
 result <- referred_df[referred_df$accession_no %in% sample_name_clean, ]
 colnames(result) <- c('sample_id','arsrl_org') 
