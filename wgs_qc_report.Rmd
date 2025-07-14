@@ -82,15 +82,35 @@ wgs_df$org_code[grepl("Salmonella",wgs_df$wgs_id)] = "sal"
 wgs_df$org_code[grepl("Shigella",wgs_df$wgs_id)] = "shi"
 wgs_df$org_code[grepl("Vibrio",wgs_df$wgs_id)] = "vic"
 wgs_df$org_code[grepl("Klebsiella quasipneumoniae",wgs_df$wgs_id)] = "kpn"
+wgs_df$org_code[grepl("Klebsiella variicola",wgs_df$wgs_id)] = "kpn"
+wgs_df$org_code[grepl("Raoultella planticola",wgs_df$wgs_id)] = "kpn"
+wgs_df$org_code[grepl("Streptococcus pseudopneumoniae",wgs_df$wgs_id)] = "spn"
 
 
-## 1. Create reference data of to check genome size
+
+
+## Create reference data with ±2% tolerance built in
+bactopia_genome_size <- data.frame(
+  org_code = c("aba", "pae","kpn", "eco","efa", "efm","sau", "spn","hin", "ngo","sal", "sat", "pce", "'shi"),
+  genome_size = c(4000000, 6300000, 5400000, 5000000, 3000000, 2900000, 2800000, 2200000, 1800000, 2200000, 4900000, 4700000, 8200000, 4500000)
+)
+
+# compute total final coverage
+wgs_df <- wgs_df %>%
+  left_join(bactopia_genome_size, by = "org_code") %>%
+  mutate(
+    final_coverage = (qc_original_total_bp/genome_size)
+    )
+
+
+
+## Create reference data of to check genome size
 size_ranges <- data.frame(
-  org_code = c("aba", "pae","kpn", "eco","efa", "efm","sau", "spn","hin", "ngo","sal", "sat"),
+  org_code = c("aba", "pae","kpn", "eco","efa", "efm","sau", "spn","hin", "ngo","sal", "sat", "pce", "shi"),
   size_min = c(3400000, 5500000, 5000000, 4500000, 2800000, 2600000,   
-             2700000, 2000000, 1700000, 2100000, 4500000, 4600000),  
+             2700000, 2000000, 1700000, 2100000, 4500000, 4600000, 7600000, 4100000),  
   size_max = c(4200000, 7000000, 5700000, 5500000, 3200000, 3100000,   
-               3000000, 2300000, 1900000, 2300000, 5300000, 4800000) 
+               3000000, 2300000, 1900000, 2300000, 5300000, 4800000, 8700000, 4800000) 
 )
 
 # Modify size ranges: subtract 10% from min, add 10% to max
@@ -100,32 +120,31 @@ size_ranges <- size_ranges %>%
     size_max = size_max * 1.1
   )
 
-## 3. Check if GC is within ±2% of expected range
+## Check if GC is within ±2% of expected range
 wgs_df <- wgs_df %>%
   left_join(size_ranges, by = "org_code") %>%
   mutate(
     genome_size_result = case_when(
-      assembler_total_contig_length >= size_min & assembler_total_contig_length <= size_max ~ "passed",
-      assembler_total_contig_length < size_min ~ "failed",
-      assembler_total_contig_length > size_max ~ "failed"
+      total_contig_length >= size_min & total_contig_length <= size_max ~ "passed",
+      total_contig_length < size_min ~ "failed",
+      total_contig_length > size_max ~ "failed"
     )
   ) %>%
-  select(org_code, assembler_total_contig_length, genome_size_result, everything())
+  select(org_code, total_contig_length, genome_size_result, everything())
 
 
 
 
-## 1. Create reference data with ±2% tolerance built in
+## Create reference data with ±2% tolerance built in
 organism_gc_ranges <- data.frame(
-  org_code = c("aba", "pae","kpn", "eco","efa", "efm","sau", "spn","hin", "ngo","sal", "sat"),
-  GC_min = c(37, 63, 55, 49, 35, 36, 31, 38, 36, 50, 50, 50),  # Original - 2%
-  GC_max = c(41, 69, 59, 53, 39, 40, 35, 42, 40, 54, 54, 54)   # Original + 2%
+  org_code = c("aba", "pae","kpn", "eco","efa", "efm","sau", "spn","hin", "ngo","sal", "sat", "pce", "'shi"),
+  GC_min = c(37, 63, 55, 49, 35, 36, 31, 38, 36, 50, 50, 50, 64.7, 48.7),  # Original - 2%
+  GC_max = c(41, 69, 59, 53, 39, 40, 35, 42, 40, 54, 54, 54, 68.7, 52.7)   # Original + 2%
 )
 
 
-## 3. Check if GC is within ±2% of expected range
+## Check if GC is within ±2% of expected range
 wgs_df <- wgs_df %>%
-  mutate(gc_content = gc_content * 100) %>%  # Convert to percentage
   left_join(organism_gc_ranges, by = "org_code") %>%
   mutate(
     GC_result = case_when(
@@ -148,21 +167,22 @@ wgs_df <- wgs_df %>%
 
 
 
+
 wgs_df <- wgs_df %>%
   rowwise() %>%
   mutate(
     condition_checks = list(c(
       "Completeness" = completeness >= 90,
       "Contamination" = contamination <= 5,
-      "Depth of coverage" = qc_final_coverage >= 20,
+      "Depth of coverage" = final_coverage >= 20,
       "Genome size" = genome_size_result == "passed",
       "GC content" = GC_result == "passed",
-      "Contig count" = assembler_total_contig < 500,
+      "Contig count" = total_contig < 500,
       #"" = assembler_l50_contig_count <= 50,
       #"" = assembler_max_contig_length > 200000,
       #"" = assembler_contig_percent_n < 1,
       #"" = assembler_percent_contigs_greater_10k >= 90,
-      "N50" = assembler_n50_contig_length > 20000,
+      "N50" = n50_contig_length > 20000,
       "Mean read Q-score" = qc_final_qual_mean >= 30
       
     )),
@@ -183,7 +203,7 @@ wgs_df <- wgs_df %>%
 wgs_df$iso_num <- seq.int(nrow(wgs_df))
 
 
-#file_name <- paste0("data_files/",get_batchname,"/",get_batchname,"_wgs_df.xlsx")
+#file_name <- paste0("data_files/",batch_code,"_wgs_df.xlsx")
 #write_xlsx(wgs_df, file_name)
 
 ```
@@ -192,23 +212,23 @@ wgs_df$iso_num <- seq.int(nrow(wgs_df))
 
 ```{r sample_sheet, echo = FALSE, warning = FALSE, message = FALSE}
 wgs_samplesheet <- read_csv(paste0("E:/DMU Projects/wgs-qc/data_files/",get_samplesheet,".csv"))
+#wgs_samplesheet <- read_xlsx(paste0("E:/DMU Projects/wgs-qc/data_files/",get_samplesheet,".xlsx"))
+
 names(wgs_samplesheet) <- tolower(names(wgs_samplesheet))
+
+wgs_samplesheet$sample_id <- toupper(wgs_samplesheet$sample_id)
 
 
 wgs_samplesheet$sample_id <- gsub("-", "_", wgs_samplesheet$sample_id, fixed=TRUE)
-wgs_samplesheet$sample_id <- toupper(wgs_samplesheet$sample_id)
+#wgs_samplesheet$sample_name <- toupper(wgs_samplesheet$sample_name)
 
-# Define a function to remove the second underscore if the string doesn't contain the specific text
-remove_second_underscore <- function(x) {
-  if (!grepl('UTP', x)) {
-    x <- gsub("^(.*?_.*?)_(.*)", "\\1\\2", x)
-  }
-  return(x)
-}
 
-# Apply the function to the column of strings
-wgs_samplesheet <- wgs_samplesheet %>%
-  mutate(sample_id = sapply(sample_id, remove_second_underscore))
+#remove special characters in batch name
+batch_name_clean <- gsub("[[:punct:]]", "", batch_code)
+
+# paste batch_name_clean to sample_id column
+wgs_samplesheet$sample_id <- paste(wgs_samplesheet$sample_id, batch_name_clean, sep = "_")
+
 
 #Check if STC sample is present in the id list
 stc_sample <- grep("STC", wgs_samplesheet[['sample_id']], value = TRUE)
@@ -230,7 +250,7 @@ wgs_df$wgs_id[is.na(wgs_df$wgs_id)] <- 'Not Identified'
 ```
 
 
-\normalsize Batch Name: `r get_batchname`
+\normalsize Batch Name: `r batch_code`
 
 \normalsize Experiment Name: `r WGS_exp_name`
 
@@ -241,7 +261,7 @@ wgs_df$wgs_id[is.na(wgs_df$wgs_id)] <- 'Not Identified'
 
 ```{r qc listing, echo = FALSE, warning = FALSE, message = FALSE}
 #filter dataframe based on the sample_id present in the WGS dataframe
-wgs_samplesheet_good <- wgs_samplesheet[wgs_samplesheet$sample_id %in% id_list, ]
+wgs_samplesheet_good <- wgs_samplesheet[wgs_samplesheet$sample_id %in% sample_name, ]
 wgs_samplesheet_good <- subset(wgs_samplesheet_good, select = c('sample_id','description'))
 
 
@@ -250,28 +270,40 @@ wgs_samplesheet_good <- subset(wgs_samplesheet_good, select = c('sample_id','des
 wgs_df <- merge(unique(wgs_df), unique(wgs_samplesheet_good), by = "sample_id", all.x= TRUE) 
 
 
+#remove batch name in sample_id
+wgs_df <- wgs_df %>%
+  mutate(
+    sample_id = case_when(
+      str_count(sample_id, "_") == 4 ~ sub("^([^_]+_[^_]+_[^_]+_[^_]+)_.*$", "\\1", sample_id),
+      str_count(sample_id, "_") == 3 ~ sub("^([^_]+_[^_]+_[^_]+)_.*$", "\\1", sample_id),
+      str_count(sample_id, "_") == 2 ~ sub("^(([^_]+_[^_]+)).*", "\\1", sample_id),
+      TRUE ~ sample_id  # Default case (keep original)
+    )
+  )
+
+
 retain_column <- c('iso_num','sample_id','wgs_id','description')
 wgs_result_df <- subset(wgs_df, select = retain_column)
+
+wgs_result_df1 <-wgs_result_df
+#wgs_result_df <-wgs_result_df1
+
+
 
 #merge ARSRL result and WGS result
 qc_listing_df <- merge(unique(arsrl_result_df), unique(wgs_result_df), by = "sample_id", all.x= TRUE) 
 
 
 #create dataframe ARSRL result with no WGS result
-wgs_no_result <- wgs_result_df[!wgs_result_df$sample_id %in% arsrl_result_df$sample_id, ]
+wgs_no_result <- arsrl_result_df[!arsrl_result_df$sample_id %in% wgs_result_df$sample_id, ]
 
 
 
 #format wgs_no_result dataframe
 if (nrow(wgs_no_result != 0)){
-  wgs_no_result$arsrl_org <- NA
-  wgs_no_result <- wgs_no_result[, colnames(wgs_no_result)[c(2,5,1,3,4)]]
-
-  qc_listing_df <- rbind(qc_listing_df,wgs_no_result )
+  qc_listing_df$description <- ifelse(is.na(qc_listing_df$description),wgs_samplesheet_good$description[match(paste0(wgs_no_result$sample_id, "_", batch_name_clean), wgs_samplesheet_good$sample_id)], qc_listing_df$description)
   
-  new_order <- sapply(id_list, function(x,qc_listing_df){which(qc_listing_df$sample_id == x)}, qc_listing_df=qc_listing_df)
-  qc_listing_df <- qc_listing_df[new_order,]
-
+  qc_listing_df$iso_num <- ifelse(is.na(qc_listing_df$iso_num), nrow(qc_listing_df), qc_listing_df$iso_num)
 }
 
 
@@ -304,7 +336,7 @@ failure_color <- which(wgs_df$result == 'FALSE')
 #condition for non-concordant
 qc_listing_df$arsrl_org <- ifelse(qc_listing_nc$concordant == TRUE,qc_listing_df$arsrl_org, paste0(qc_listing_df$arsrl_org," (x)"))
 
-wgs_df$concordant <- qc_listing_nc$concordant[match(wgs_df$sample_id, qc_listing_nc$sample_id)]
+wgs_df$concordant <- qc_listing_nc$concordant[match(wgs_df$sample_id, paste0(qc_listing_nc$sample_id, "_", batch_name_clean))]
 
 
 #remove genus column
@@ -349,7 +381,7 @@ qc_listing_df %>%
 
 ```{r low reads, echo=FALSE, message=FALSE, warning=FALSE,results='asis'}
 #filter dataframe based on the sample_id not present in the WGS samplesheet
-wgs_lowreads <- wgs_samplesheet[!(wgs_samplesheet[['sample_id']] %in% id_list), ]
+wgs_lowreads <- wgs_samplesheet[!(wgs_samplesheet$sample_id %in% sample_name), ]
 wgs_lowreads <- subset(wgs_lowreads, select = c('sample_id','description'))
 
 #wgs_lowreads$sample_id <- gsub('_', '\\_', wgs_lowreads$sample_id)
@@ -384,7 +416,7 @@ $\\$
 
 ```{r summary table, echo = FALSE, warning = FALSE, message = FALSE}
 
-retain_column <- c('iso_num','sample_id','wgs_id','completeness','contamination','qc_final_coverage','assembler_total_contig_length','gc_content','assembler_total_contig','assembler_n50_contig_length','qc_final_qual_mean', 'condition_checks')
+retain_column <- c('iso_num','sample_id','wgs_id','completeness','contamination','final_coverage','total_contig_length','gc_content','total_contig','n50_contig_length','qc_final_qual_mean', 'condition_checks')
 
 wgs_summary_df <- subset(wgs_df, select = retain_column)
 
@@ -403,8 +435,8 @@ wgs_summary_df <- wgs_summary_df %>%
 
 
 # round off qc_final_coverage column to one decimal place
-wgs_summary_df$qc_final_coverage <-  format(round(wgs_summary_df$qc_final_coverage, 1), nsmall = 1)
-
+#wgs_summary_df$qc_final_coverage <-  format(round(wgs_summary_df$qc_final_coverage, 1), nsmall = 1)
+wgs_summary_df$final_coverage <- format(round(unlist(wgs_summary_df$final_coverage), 1), nsmall = 1)
 
 # Create a conversion function to convert Basepairs to MEgabasepairs
 bp_to_mb <- function(bp) {
@@ -415,14 +447,26 @@ bp_to_mb <- function(bp) {
 }
 
 #convert bp to mb
-wgs_summary_df$assembler_total_contig_length <- bp_to_mb(wgs_summary_df$assembler_total_contig_length)
+#wgs_summary_df$total_contig_length <- bp_to_mb(wgs_summary_df$total_contig_length)
+wgs_summary_df$total_contig_length <- bp_to_mb(unlist(wgs_summary_df$total_contig_length))
 
 summary_table <- function(data) {
   # Convert col_index to character if it isn't already
   data$col_index <- as.character(data$col_index)
   
+  # Convert final_coverage to numeric if it isn't already
+  data$final_coverage <- as.numeric(data$final_coverage)
+  
+  #remove batch name in sample_id
+  #data$sample_id <- sub("^(([^_]+_[^_]+)).*", "\\1", data$sample_id)
+  # Remove trailing underscore
+  #data$sample_id <- sub("_$", "", data$sample_id)
+    
+  
   data$sample_id <- gsub("_", "\\_", data$sample_id, fixed = TRUE)
-  data$qc_final_qual_mean <- format(round(data$qc_final_qual_mean, 1), nsmall = 1)
+  #data$qc_final_qual_mean <- format(round(data$qc_final_qual_mean, 1), nsmall = 1)
+  data$qc_final_qual_mean <- format(round(unlist(data$qc_final_qual_mean), 1), nsmall = 1)
+  data$final_coverage <- format(round(unlist(data$final_coverage), 1), nsmall = 1)
   
   # Create a display copy with all columns as character
   display_df <<- data %>%
@@ -432,11 +476,11 @@ summary_table <- function(data) {
            `WGS ID` = wgs_id,
            `completeness` = completeness,
            `contamination` = contamination,
-           `Depth of coverage` = qc_final_coverage,
-           `Genome size` = assembler_total_contig_length,
+           `Depth of coverage` = final_coverage,
+           `Genome size` = total_contig_length,
            `GC content` = gc_content,
-           `Contig count` = assembler_total_contig,
-           `N50` = assembler_n50_contig_length,
+           `Contig count` = total_contig,
+           `N50` = n50_contig_length,
            `Mean read Q-score` = qc_final_qual_mean) %>%
     select(-col_index)
   
@@ -469,6 +513,7 @@ summary_table <- function(data) {
     }
   }
   
+ 
   # Create the table
   kable(display_df, format = "latex", booktabs = TRUE, escape = FALSE, align = "c") %>%
     kable_styling(latex_options = c("scale_down", "hold_position")) %>%
@@ -486,14 +531,65 @@ summary_table <- function(data) {
 
 summary_table(wgs_summary_df)
 
+
 ```
+
+
+
+
+```{r summary table result, echo = FALSE, warning = FALSE, message = FALSE}
+# create new wgs_summary_table with additional column for result
+
+wgs_summary_result <- wgs_df %>%
+  select(sample_id, failed_conditions, result) %>%
+  mutate(
+    batch_code = batch_code,
+    result = ifelse(result != TRUE, "Failed", "Passed")
+  ) 
+
+
+wgs_summary_result1 <- merge(wgs_summary_result, wgs_summary_df, by = "sample_id")
+
+
+wgs_summary_result1 <- wgs_summary_result1 %>%
+  mutate(sample_id = paste0(sample_id, "_", batch_name_clean)) %>%
+  select(-iso_num, -col_index) %>%
+  relocate(batch_code, .before = sample_id)
+
+
+# append googlesheet "result" tab
+sheet_append(ss = sheet_id, sheet = "result", data = wgs_summary_result1)
+
+ 
+#file_name <- paste0("data_files/",batch_code,"_wgs_df_result.xlsx")
+#write_xlsx(wgs_summary_result1, file_name)
+  
+
+```
+
+
 
 
 $\\$ $\\$ $\\$ $\color{red}{\normalsize\textbf{RECOMMENDATION:}}$
 
 
 ```{r recommendation table ,echo=FALSE, message=FALSE, warning=FALSE}
-reco_df <- wgs_df %>%
+wgs_qc <- qc_listing_nc
+wgs_qc$failed_conditions = wgs_df$failed_conditions[match(qc_listing_nc$sample_id, wgs_df$sample_id)]
+
+
+if (nrow(wgs_no_result != 0)){
+  no_result <- wgs_no_result$sample_id
+  wgs_qc <- wgs_qc %>%
+    mutate(
+      concordant = ifelse(sample_id %in% no_result, TRUE, concordant),
+      failed_conditions = ifelse(sample_id %in% no_result, "No WGS Result", failed_conditions)
+    )
+  
+}
+
+
+reco_df <- wgs_qc %>%
   filter(!is.na(failed_conditions)|concordant == FALSE) %>%
   select(sample_id, failed_conditions, concordant) %>%
   mutate(
@@ -503,14 +599,36 @@ reco_df <- wgs_df %>%
   group_by(failed_conditions) %>%
   summarise(sample_id = paste(sample_id, collapse = ", "),
             Remarks = paste(unique(remarks), collapse = "; "),
-            .groups = 'drop') %>%
-  rename(`Sample ID` = sample_id, `Reason - Failed Metrics` = failed_conditions)
+            .groups = 'drop')
 
 # arrange columns
 reco_df <- reco_df[, c(2,1,3)] 
 
 
+
+
+if (nrow(wgs_lowreads) != 0){
+  wgs_lowreads_reco <- wgs_lowreads %>%
+    mutate(
+      failed_conditions = "Low read counts",
+      remarks = "For repeat testing"
+    ) %>%
+    select(sample_id, failed_conditions, remarks) %>%
+    group_by(failed_conditions) %>%
+    summarise(sample_id = paste(sample_id, collapse = ", "),
+            Remarks = paste(unique(remarks), collapse = "; "),
+            .groups = 'drop')
+  
+  reco_df <- rbind(reco_df, wgs_lowreads_reco)
+}
+
+
+
+
+
 if (nrow(reco_df) != 0) {
+  colnames(reco_df) <- c('Sample ID','Reason - Failed Metrics','Remarks')
+  
   reco_table <- reco_df %>% 
   kable(
     format = "latex",
@@ -692,22 +810,34 @@ ggplot(data = wgs_df, aes(x = org_code, fill = result_cat)) +
  
 ### Number of contigs
 
-```{r ,echo=FALSE, message=FALSE, warning=FALSE}
+```{r contigs_result,echo=FALSE, message=FALSE, warning=FALSE}
+# Convert class
+wgs_df$total_contig <- as.numeric(unlist(wgs_df$total_contig))
 
+# Create a new variable for color mapping
+wgs_df$status <- ifelse(wgs_df$total_contig < 500, "Passed", "Above threshold")
+
+# Plot
 ggplot(data = wgs_df) +
-  geom_point(mapping = aes(x = assembler_total_contig, y = org_code, color = ifelse(assembler_total_contig < 500, "#8ad879", "#f3533a"))) +
+  geom_point(mapping = aes(x = total_contig, y = org_code, color = status)) +
   ylab("Organisms") +
   xlab("Number of Contigs") +
-  scale_color_manual(values = c("#8ad879", "#f3533a"), labels = c("Passed", "Above threshold")) +
+  scale_color_manual(
+    values = c("Passed" = "#8ad879", "Above threshold" = "#f3533a"),
+    labels = c("Passed", "Above threshold")
+  ) +
   labs(color = "Contigs")
-  #theme_minimal()
+
 ```
 
 ### N50 Value
 
 ```{r n50_result ,echo=FALSE, message=FALSE, warning=FALSE}
+# Convert class
+wgs_df$n50_contig_length <- as.numeric(unlist(wgs_df$n50_contig_length))
+
 ggplot(data = wgs_df) +
-  geom_point(mapping = aes(x = assembler_n50_contig_length, y = org_code, color = ifelse(assembler_n50_contig_length > 20000 , "#8ad879", "#f3533a"))) +
+  geom_point(mapping = aes(x = n50_contig_length, y = org_code, color = ifelse(n50_contig_length > 20000 , "#8ad879", "#f3533a"))) +
   ylab("Organisms") +
   xlab("N50 Value") +
   scale_color_manual(values = c("#8ad879", "#f3533a"), labels = c("Passed", "Above threshold")) +
@@ -722,8 +852,11 @@ ggplot(data = wgs_df) +
 ### Total Length
 
 ```{r length_result ,echo=FALSE, message=FALSE, warning=FALSE}
+# Convert class
+wgs_df$total_contig_length <- as.numeric(unlist(wgs_df$total_contig_length))
+
 ggplot(data = wgs_df) +
-  geom_point(mapping = aes(x = assembler_total_contig_length, y = org_code, color = ifelse(genome_size_result == "passed" , "#8ad879", "#f3533a"))) +
+  geom_point(mapping = aes(x = total_contig_length, y = org_code, color = ifelse(genome_size_result == "passed" , "#8ad879", "#f3533a"))) +
   ylab("Organisms") +
   xlab("Total length Value") +
   scale_color_manual(values = c("#8ad879", "#f3533a"), labels = c("Passed", "Above threshold")) +
@@ -742,23 +875,36 @@ ggplot(data = wgs_df) +
 mlst_df_clean <- df_mlst %>%
   rename("sample_id" = 1,
          "species" = 2,
-         "MLST" = 3)
-
-
-
-#remove ".fna.gz"
-mlst_df_clean$sample_id <- gsub(".fna.gz", "", mlst_df_clean$sample_id, fixed=TRUE)
+         "MLST" = 3
+         ) %>%
+  mutate(
+    sample_id = sub(".*/(.*)\\.fna$", "\\1", sample_id),
+    sample_id = gsub("-", "_", sample_id)
+    ) %>%
+  filter(str_detect(sample_id, batch_name_clean))
 
 
 #drop row without species
 mlst_df_clean <- subset(mlst_df_clean, mlst_df_clean$species != '-')
 
-#change "-" to "_" in sample_id column
-mlst_df_clean$sample_id <- gsub("-", "_", mlst_df_clean$sample_id, fixed=TRUE)
+#remove batch name in sample_id
+mlst_df_clean <- mlst_df_clean %>%
+  mutate(
+    sample_id = case_when(
+      str_count(sample_id, "_") == 4 ~ sub("^([^_]+_[^_]+_[^_]+_[^_]+)_.*$", "\\1", sample_id),
+      str_count(sample_id, "_") == 3 ~ sub("^([^_]+_[^_]+_[^_]+)_.*$", "\\1", sample_id),
+      str_count(sample_id, "_") == 2 ~ sub("^(([^_]+_[^_]+)).*", "\\1", sample_id),
+      TRUE ~ sample_id  # Default case (keep original)
+    )
+  )
+
 
 #merge wgs_id from wgs_df to mlst_df to set as species value
 wgs_species <- subset(wgs_df, select = c("sample_id", "wgs_id"))
 mlst_df_clean <- merge(mlst_df_clean,wgs_species,by = "sample_id")
+
+
+
 
 #reorder column
 mlst_df_clean <- mlst_df_clean %>% 
@@ -950,35 +1096,56 @@ for(i in mlst_df_list) {
 \normalsize\textbf{AMR PREDICTION RESULTS}\textbf\normalsize
 
 ```{r amr_genes ,echo=FALSE, message=FALSE, warning=FALSE}
+df_amrfinderplus1 <- df_amrfinderplus
+
 #checkm2 column names to lower
-names(df_amrfinderplus) <- tolower(names(df_amrfinderplus))
+names(df_amrfinderplus1) <- tolower(names(df_amrfinderplus1))
 
 
 #Change Name to sample_id
-names(df_amrfinderplus)[names(df_amrfinderplus) == 'name'] <- 'sample_id'
-names(df_amrfinderplus)[names(df_amrfinderplus) == 'element symbol'] <- 'element_symbol'
+names(df_amrfinderplus1)[names(df_amrfinderplus1) == 'name'] <- 'sample_id'
+names(df_amrfinderplus1)[names(df_amrfinderplus1) == 'element symbol'] <- 'element_symbol'
 
 #change "-" to "_" in sample_id column
-df_amrfinderplus$sample_id <- gsub("-", "_", df_amrfinderplus$sample_id, fixed=TRUE)
+df_amrfinderplus1$sample_id <- gsub("-", "_", df_amrfinderplus1$sample_id, fixed=TRUE)
+
+
+#remove batch name in sample_id
+df_amrfinderplus1 <- df_amrfinderplus1 %>%
+  mutate(
+    sample_id = case_when(
+      str_count(sample_id, "_") == 4 ~ sub("^([^_]+_[^_]+_[^_]+_[^_]+)_.*$", "\\1", sample_id),
+      str_count(sample_id, "_") == 3 ~ sub("^([^_]+_[^_]+_[^_]+)_.*$", "\\1", sample_id),
+      str_count(sample_id, "_") == 2 ~ sub("^(([^_]+_[^_]+)).*", "\\1", sample_id),
+      TRUE ~ sample_id  # Default case (keep original)
+    )
+  )
+
 
 #merge wgs_id from wgs_df to mlst_df to set as species value
-df_amrfinderplus <- merge(df_amrfinderplus,wgs_species,by = "sample_id")
+df_amrfinderplus1 <- merge(df_amrfinderplus1,wgs_species,by = "sample_id")
 
 #remove "quasi" to wgs_id column
-df_amrfinderplus$wgs_id <- gsub("quasi", "", df_amrfinderplus$wgs_id, fixed=TRUE)
+df_amrfinderplus1$wgs_id <- gsub("quasi", "", df_amrfinderplus1$wgs_id, fixed=TRUE)
 
-amr_genes_species <- unique(df_amrfinderplus$wgs_id)
+
+
+# Filter rows where 'name' contains the word "sample"
+#df_amrfinderplus1 <- df_amrfinderplus1[grepl(batch_name_clean, df_amrfinderplus1$sample_id), ]
+
+
+amr_genes_species <- unique(df_amrfinderplus1$wgs_id)
 
 #vector to hold list of amr gene datables
 amr_gene_df_list = c()
 
 
 for(i in amr_genes_species) {
-  df <- subset(df_amrfinderplus, df_amrfinderplus$wgs_id == i)
+  df <- subset(df_amrfinderplus1, df_amrfinderplus1$wgs_id == i)
   sample_id <- c(df$sample_id)
   
-  #create new dataframe to duplicate df_amrfinderplus
-  amr_genes_df <- df_amrfinderplus
+  #create new dataframe to duplicate df_amrfinderplus1
+  amr_genes_df <- df_amrfinderplus1
   
   #change "NA" to " " in subclass column
   amr_genes_df$subclass <- gsub("NA", "", amr_genes_df$subclass, fixed=TRUE)
@@ -1022,8 +1189,10 @@ for(i in amr_genes_species) {
 for(i in amr_gene_df_list) {
   df <- get(i)
   
+  wgs_species_1 <- wgs_species
+  
   # Merge wgs_id from wgs_df to amr_gene to set as species value
-  df <- merge(df, wgs_species, by = "sample_id")
+  df <- merge(df, wgs_species_1, by = "sample_id")
   
   # Change wgs_id to species
   names(df)[names(df) == 'wgs_id'] <- 'species'
@@ -1104,14 +1273,13 @@ for(i in amr_gene_df_list) {
 
 ```{r no_amr_genes_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 #list existing sample_id in the mlst table
-no_amr <- wgs_df$wgs_id[!(wgs_df$wgs_id %in% df_amrfinderplus$wgs_id)]
+no_amr <- wgs_df$wgs_id[!(df_amrfinderplus1$wgs_id %in% wgs_df$wgs_id)]
 
 #remove if with quasi value
 no_amr <-no_amr[!grepl('quasi', no_amr)]
 
-
 if (length(no_amr) !=0){
-  sample_id <- wgs_df$sample_id[!(wgs_df$sample_id %in% df_amrfinderplus$sample_id)]
+  sample_id <- wgs_df$sample_id[!(wgs_df$sample_id %in% paste(df_amrfinderplus1$sample_name, batch_name_clean, sep = "_"))]
   wgs_id <- no_amr
   remarks <- "No AMR determinant detected"
   

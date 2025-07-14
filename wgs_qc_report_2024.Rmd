@@ -1,0 +1,551 @@
+---
+title: \vspace{-1.5cm} \begin{LARGE} WGS Quality Control Report \end{LARGE}
+output:
+  pdf_document: 
+    latex_engine: lualatex
+    keep_tex: true
+geometry: margin=0.75in
+mainfont: Helvetica
+papersize: a4
+header-includes:
+- \usepackage{titling}
+- \pretitle{\begin{flushleft}}
+- \posttitle{\end{flushleft}} 
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{float}
+- \floatplacement{figure}{H}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+- \usepackage{soul}
+- \usepackage{caption}
+- \usepackage[singlelinecheck=false]{caption}
+- \usepackage[font={small,bf}]{caption}
+- \usepackage{multirow}
+- \usepackage{array}
+- \usepackage{lscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
+- \usepackage[dvipsnames]{xcolor}
+- \renewcommand{\footnotesize}{\tiny}
+- \usepackage{threeparttable}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.pos = 'H')
+```
+
+```{r load library, echo = FALSE, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(knitr)
+library(readxl)
+library(dplyr)
+library(kableExtra)
+library(RColorBrewer)
+library(scales)
+library(readr)
+library(writexl)
+library(conflicted)
+
+conflicts_prefer(openxlsx::write.xlsx)
+conflicts_prefer(dplyr::filter)
+```
+
+```{r load_data, echo = FALSE, warning = FALSE, message = FALSE}
+wgs_df <- wgs_df1
+
+#rename species column to wgs_org
+wgs_df <- wgs_df %>% 
+  rename(wgs_id = species)
+
+#complete wgs_org name
+wgs_df$wgs_id <- ifelse(wgs_df$wgs_id == "Acinetobacter", "Acinetobacter baumannii", 
+                         ifelse(wgs_df$wgs_id == "Escherichia", "Escherichia coli", wgs_df$wgs_id))
+
+#load organism code reference file
+#org_df <- read_xlsx("data_files/whonet_codes_2024.xlsx", "ORGANISM")
+org_df <- read_xlsx("data_files/ORG GROUPINGS_09042024.xlsx", "extended_list_complete")
+org_df <- subset(org_df, select = c(WHONET_ORG_CODE, ORGANISM))
+#rename ORGANISM_name column to wgs_id
+org_df <- org_df %>% rename(wgs_id = ORGANISM)
+
+
+wgs_df <- merge(wgs_df, org_df, by = "wgs_id", all.x = TRUE)
+
+#rename ORG_ARS column to ORG
+wgs_df <- wgs_df %>% rename(org_code = WHONET_ORG_CODE)
+
+
+wgs_df$org_code_clean <- wgs_df$org_code
+
+
+
+wgs_df$org_code_clean[grepl("Salmonella",wgs_df$wgs_id)] = "sal"
+wgs_df$org_code_clean[grepl("Salmonella enterica",wgs_df$wgs_id)] = "sat"
+wgs_df$org_code_clean[grepl("Shigella",wgs_df$wgs_id)] = "shi"
+wgs_df$org_code_clean[grepl("Vibrio",wgs_df$wgs_id)] = "vic"
+wgs_df$org_code_clean[grepl("Klebsiella",wgs_df$wgs_id)] = "kpn"
+wgs_df$org_code_clean[grepl("Pseudomonas",wgs_df$wgs_id)] = "pae"
+wgs_df$org_code_clean[grepl("Acinetobacter",wgs_df$wgs_id)] = "aba"
+wgs_df$org_code_clean[grepl("Streptococcus",wgs_df$wgs_id)] = "spn"
+wgs_df$org_code_clean[grepl("Streptococcus pseudopneumoniae",wgs_df$wgs_id)] = "spn"
+wgs_df$org_code_clean[grepl("Streptococcus pyogenes",wgs_df$wgs_id)] = "spy"
+wgs_df$org_code_clean[grepl("Streptococcus oralis",wgs_df$wgs_id)] = "sol"
+wgs_df$org_code_clean[grepl("Burkholderia",wgs_df$wgs_id)] = "pce"
+wgs_df$org_code_clean[grepl("Staphylococcus",wgs_df$wgs_id)] = "sau"
+wgs_df$org_code_clean[grepl("Staphylococcus epidermidis",wgs_df$wgs_id)] = "sep"
+wgs_df$org_code_clean[grepl("Raoultella planticola",wgs_df$wgs_id)] = "kpn"
+
+
+## Create reference data with ±2% tolerance built in
+bactopia_genome_size <- data.frame(
+  org_code_clean = c("aba", "pae","kpn", "eco","efa", "efm","sau", "spn","hin", "ngo","sal", "sat", "pce", "shi", "vic"),
+  genome_size = c(4000000, 6300000, 5400000, 5000000, 3000000, 2900000, 2800000, 2200000, 1800000, 2200000, 4900000, 4700000, 8200000, 4500000, 4000000)
+)
+
+# compute total final coverage
+wgs_df <- wgs_df %>%
+  left_join(bactopia_genome_size, by = "org_code_clean") %>%
+  mutate(
+    final_coverage = (qc_original_total_bp/genome_size)
+    )
+
+
+
+## Create reference data of to check genome size
+size_ranges <- data.frame(
+  org_code_clean = c("aba", "pae","kpn", "eco","efa", "efm","sau", "spn","hin", "ngo","sal", "sat", "pce", "shi","vic"),
+  size_min = c(3400000, 5500000, 5000000, 4500000, 2800000, 2600000, 2700000, 2000000, 
+               1700000, 2100000, 4500000, 4600000, 7600000, 4100000, 3900000),  
+  size_max = c(4200000, 7000000, 5700000, 5500000, 3200000, 3100000,3000000, 2300000, 
+               1900000, 2300000, 5300000, 4800000, 8700000, 4800000, 4200000) 
+)
+
+# Modify size ranges: subtract 10% from min, add 10% to max
+size_ranges <- size_ranges %>%
+  mutate(
+    size_min = size_min * 0.9,
+    size_max = size_max * 1.1
+  )
+
+## Check if GC is within ±2% of expected range
+wgs_df <- wgs_df %>%
+  left_join(size_ranges, by = "org_code_clean") %>%
+  mutate(
+    genome_size_result = case_when(
+      total_contig_length >= size_min & total_contig_length <= size_max ~ "passed",
+      total_contig_length < size_min ~ "failed",
+      total_contig_length > size_max ~ "failed"
+    )
+  ) %>%
+  select(org_code_clean, total_contig_length, genome_size_result, everything())
+
+
+
+
+## Create reference data with ±2% tolerance built in
+organism_gc_ranges <- data.frame(
+  org_code_clean = c("aba", "pae","kpn", "eco","efa", "efm","sau", "spn","hin", "ngo","sal", "sat", "pce", "shi", "vic"),
+  GC_min = c(37, 63, 55, 49, 35, 36, 31, 38, 36, 50, 50, 50, 64.7, 48.7, 45),  # Original - 2%
+  GC_max = c(41, 69, 59, 53, 39, 40, 35, 42, 40, 54, 54, 54, 68.7, 52.7, 49)   # Original + 2%
+)
+
+
+## Check if GC is within ±2% of expected range
+wgs_df <- wgs_df %>%
+  left_join(organism_gc_ranges, by = "org_code_clean") %>%
+  mutate(
+    GC_result = case_when(
+      gc_content >= GC_min & gc_content <= GC_max ~ "passed",
+      gc_content < GC_min ~ "failed",
+      gc_content > GC_max ~ "failed"
+    ),
+    Original_GC_range = case_when(
+      org_code_clean == "pae" ~ "65-67%",
+      org_code_clean %in% c("aba", "kpn",
+                     "eco", "efa",
+                     "efm", "sau",
+                     "spn", "hin",
+                     "ngo", "sal",
+                     "sat", "pce",
+                     "shi", "vic") ~ paste0("≈", GC_min + 2, "%")
+    )
+  ) %>%
+  select(org_code_clean, gc_content, Original_GC_range, GC_result, everything())
+
+
+
+
+
+wgs_df <- wgs_df %>%
+  rowwise() %>%
+  mutate(
+    condition_checks = list(c(
+      "Completeness" = completeness >= 90,
+      "Contamination" = contamination <= 5,
+      "Depth of coverage" = final_coverage >= 20,
+      "Genome size" = genome_size_result == "passed",
+      "GC content" = GC_result == "passed",
+      "Contig count" = total_contig < 500,
+      #"" = assembler_l50_contig_count <= 50,
+      #"" = assembler_max_contig_length > 200000,
+      #"" = assembler_contig_percent_n < 1,
+      #"" = assembler_percent_contigs_greater_10k >= 90,
+      "N50" = n50_contig_length > 20000,
+      "Mean read Q-score" = qc_final_qual_mean >= 30
+      
+    )),
+    
+    # Overall result (TRUE if all conditions passed)
+    result = all(unlist(condition_checks)),
+    
+    # List of failed conditions (only if result is FALSE)
+    failed_conditions = ifelse(
+      result,
+      NA_character_,
+      paste(names(condition_checks)[!unlist(condition_checks)], collapse = ", ")
+    )
+  ) %>%
+  ungroup()
+
+#add row number
+wgs_df$iso_num <- seq.int(nrow(wgs_df))
+
+
+file_name <- paste0("data_files/2024_summary_wgs_df.xlsx")
+write_xlsx(wgs_df, file_name)
+
+```
+
+
+
+```{r sample_sheet, echo = FALSE, warning = FALSE, message = FALSE}
+#wgs_samplesheet <- read_csv(paste0("E:/DMU Projects/wgs-qc/data_files/",get_samplesheet,".csv"))
+wgs_samplesheet <- read_xlsx(paste0("E:/DMU Projects/wgs-qc/data_files/",get_samplesheet,".xlsx"))
+
+names(wgs_samplesheet) <- tolower(names(wgs_samplesheet))
+
+wgs_samplesheet$sample_id <- toupper(wgs_samplesheet$sample_id)
+
+
+#Get experiment name
+WGS_exp_name <- unique(wgs_samplesheet[['experiment name']])
+
+
+
+#not identified sample
+wgs_df$wgs_id[is.na(wgs_df$wgs_id)] <- 'Not Identified'
+
+```
+
+
+\normalsize Batch Name: `r batch_code`
+
+\normalsize Experiment Name: `r WGS_exp_name`
+
+\fontsize{7}{8}
+\selectfont
+\captionsetup[table]{labelformat=empty}
+\renewcommand{\arraystretch}{1.2}
+
+```{r qc listing, echo = FALSE, warning = FALSE, message = FALSE}
+wgs_df <- wgs_df2
+
+sample_name <- wgs_df$sample_name
+#filter dataframe based on the sample_id present in the WGS dataframe
+wgs_samplesheet_good <- wgs_samplesheet[wgs_samplesheet$sample_name %in% sample_name, ]
+wgs_samplesheet_good <- subset(wgs_samplesheet_good, select = c('sample_name','description'))
+
+
+
+#merge wgs df and samplesheet
+wgs_df <- merge(unique(wgs_df), unique(wgs_samplesheet_good), by = "sample_name", all.x= TRUE) 
+
+
+retain_column <- c('iso_num','sample_name','wgs_id','description')
+wgs_result_df <- subset(wgs_df, select = retain_column)
+
+wgs_result_df1 <-wgs_result_df
+#wgs_result_df <-wgs_result_df1
+
+
+
+#merge ARSRL result and WGS result
+qc_listing_df <- merge(unique(arsrl_result_df), unique(wgs_result_df), by = "sample_name", all.x= TRUE) 
+
+
+#create dataframe ARSRL result with no WGS result
+wgs_no_result <- arsrl_result_df[!arsrl_result_df$sample_name %in% wgs_result_df$sample_name, ]
+
+
+
+#format wgs_no_result dataframe
+if (nrow(wgs_no_result != 0)){
+  qc_listing_df$description <- ifelse(is.na(qc_listing_df$description),wgs_samplesheet_good$description[match(paste0(wgs_no_result$sample_id, "_", batch_name_clean), wgs_samplesheet_good$sample_id)], qc_listing_df$description)
+  
+  qc_listing_df$iso_num <- ifelse(is.na(qc_listing_df$iso_num), nrow(qc_listing_df), qc_listing_df$iso_num)
+}
+
+
+
+# Define a function to get the part before the first white space
+get_value_before_whitespace <- function(x) {
+  parts <- strsplit(as.character(x), " ")[[1]]
+  return(parts[1])
+}
+
+# Get genus of ARSRL org result
+qc_listing_df$Genus <- sapply(qc_listing_df$arsrl_org, get_value_before_whitespace)
+
+qc_listing_nc <- qc_listing_df %>%
+  rowwise() %>%
+  mutate(concordant = 
+           grepl(Genus, wgs_id)
+         )
+
+
+#sort wgs df and qc listing df by row number
+wgs_df <- wgs_df[order(wgs_df$iso_num, decreasing = FALSE), ]
+qc_listing_df <- qc_listing_df[order(qc_listing_df$iso_num, decreasing = FALSE), ]
+qc_listing_nc <- qc_listing_nc[order(qc_listing_nc$iso_num, decreasing = FALSE), ]
+
+# set color for failed result
+failure_color <- which(wgs_df$result == 'FALSE')
+
+
+#condition for non-concordant
+qc_listing_df$arsrl_org <- ifelse(qc_listing_nc$concordant == TRUE,qc_listing_df$arsrl_org, paste0(qc_listing_df$arsrl_org," (x)"))
+
+wgs_df$concordant <- qc_listing_nc$concordant[match(wgs_df$sample_name, qc_listing_nc$sample_name)]
+
+
+#remove genus column
+qc_listing_df = subset(qc_listing_df, select = -c(Genus, sample_id) )
+
+#qc_listing_df$sample_id <- gsub("_", "\\_", qc_listing_df$sample_id, fixed = TRUE)
+
+
+# rename columns
+colnames(qc_listing_df) <- c('Sample ID','ARSRL','Isolate No.','WGS','Description')
+
+
+# arrange columns
+qc_listing_df <- qc_listing_df[, c(3,1,5,2,4)] 
+
+
+
+qc_listing_df %>% 
+  kable(booktabs = T, align = "c", escape = FALSE, row.names = FALSE)%>%
+  column_spec(1, width = "1cm") %>%
+  column_spec(2, width = "2.8cm") %>%
+  column_spec(3, width = "1.5cm") %>%
+  column_spec(4, width = "5cm", italic = TRUE) %>%
+  column_spec(5, width = "5cm", italic = TRUE) %>%
+  row_spec(failure_color, background = "#FD7979") %>%
+  row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c") %>%
+  footnote(general = c("PASS","  |  ", 
+                        "\\\\colorbox{Salmon}{FAILURE}","  |  ",
+                        "\\\\textcolor{Blue}{EXCEEDS THRESHOLD METRIC/S}","  |  ",
+                        "(x) - NON-CONCORDANT","  |"), 
+            general_title = "Legend:",
+            footnote_as_chunk = T, escape = F)
+
+
+```
+
+
+\fontsize{7}{8}
+\selectfont
+\captionsetup[table]{labelformat=empty}
+\renewcommand{\arraystretch}{1.2}
+
+```{r low reads, echo=FALSE, message=FALSE, warning=FALSE,results='asis'}
+#filter dataframe based on the sample_id not present in the WGS samplesheet
+wgs_lowreads <- wgs_samplesheet[!(wgs_samplesheet$sample_name %in% sample_name), ]
+wgs_lowreads <- subset(wgs_lowreads, select = c('sample_id','description'))
+
+#wgs_lowreads$sample_id <- gsub('_', '\\_', wgs_lowreads$sample_id)
+#wgs_lowreads$sample_id <- str_replace_all(wgs_lowreads$sample_id, fixed("_"), "\\_")
+
+if (nrow(wgs_lowreads != 0)){
+  lowreads_table <- wgs_lowreads
+  lowreads_table$remarks <- c("low read count")
+  #lowreads_table$sample_id <- str_replace_all(lowreads_table$sample_id, fixed("_"), "\\_")
+  colnames(lowreads_table) <- c('Sample ID','Description','Remarks') 
+  
+  kable(lowreads_table,  "latex", booktabs = T, align = "c") %>%
+    kable_styling(position = "left") %>%
+    column_spec(1, width = "3cm") %>%
+    column_spec(2, width = "3cm") %>%
+    column_spec(3, width = "7cm") %>%
+    add_header_above(c("Sample excluded in the analysis" = 3), align = "l", bold = TRUE) %>%
+    row_spec(0, background = "#D4D4D4",bold = TRUE,align = "c")
+}
+
+```
+
+
+
+$\\$
+\newpage
+\begin{landscape}
+\fontsize{7}{8}
+\selectfont
+\captionsetup[table]{labelformat=empty}
+\renewcommand{\arraystretch}{1.2}
+
+```{r summary table, echo = FALSE, warning = FALSE, message = FALSE}
+
+retain_column <- c('iso_num','sample_id','wgs_id','completeness','contamination','final_coverage','total_contig_length','gc_content','total_contig','n50_contig_length','qc_final_qual_mean', 'condition_checks','sample_name' )
+
+wgs_summary_df <- subset(wgs_df, select = retain_column)
+
+
+# identify the index of columns with false result
+wgs_summary_df <- wgs_summary_df %>%
+  rowwise() %>%
+  mutate(
+    # Get column indices of FALSE results
+    col_index = ifelse(
+      all(unlist(condition_checks)),
+      NA_character_,
+      paste(which(!unlist(condition_checks)), collapse = ",")
+    ),
+  ) %>%
+  select(-condition_checks)
+
+
+# Create a conversion function to convert Basepairs to MEgabasepairs
+bp_to_mb <- function(bp) {
+  x <- bp / 1e6
+  x <- format(round(x, 2), nsmall = 2)
+  x <- paste0(x, " Mb")
+  return(x)
+}
+
+#convert bp to mb
+#wgs_summary_df$total_contig_length <- bp_to_mb(wgs_summary_df$total_contig_length)
+wgs_summary_df$total_contig_length <- bp_to_mb(unlist(wgs_summary_df$total_contig_length))
+
+summary_table <- function(data) {
+  # Convert col_index to character if it isn't already
+  data$col_index <- as.character(data$col_index)
+  
+  # Convert final_coverage to numeric if it isn't already
+  data$final_coverage <- as.numeric(data$final_coverage)
+  
+  
+  data$sample_id <- gsub("_", "\\_", data$sample_id, fixed = TRUE)
+  #data$qc_final_qual_mean <- format(round(data$qc_final_qual_mean, 1), nsmall = 1)
+  data$qc_final_qual_mean <- format(round(unlist(data$qc_final_qual_mean), 1), nsmall = 1)
+  data$final_coverage <- format(round(unlist(data$final_coverage), 1), nsmall = 1)
+  
+  # Create a display copy with all columns as character
+  display_df <<- data %>%
+    mutate(across(everything(), as.character)) %>%
+    rename(`Isolate No.` = iso_num,
+           `Sample ID` = sample_id,
+           `WGS ID` = wgs_id,
+           `completeness` = completeness,
+           `contamination` = contamination,
+           `Depth of coverage` = final_coverage,
+           `Genome size` = total_contig_length,
+           `GC content` = gc_content,
+           `Contig count` = total_contig,
+           `N50` = n50_contig_length,
+           `Mean read Q-score` = qc_final_qual_mean) %>%
+    select(-col_index, -sample_name)
+  
+  
+  # Apply formatting
+  for (i in 1:nrow(data)) {
+    if (!is.na(data$col_index[i]) && nzchar(data$col_index[i])) {
+      # Split and convert to numeric safely
+      indices <- tryCatch({
+        as.numeric(trimws(unlist(strsplit(data$col_index[i], ","))))
+      }, error = function(e) numeric(0))
+      
+      # Remove any NAs from conversion
+      indices <- indices[!is.na(indices) & indices > 0]
+      
+      # Apply formatting to each specified column
+      for (col in indices) {
+        # Adjust column index (now accounts for renamed columns)
+        display_col <- col + 3  # Adjust based on your column structure
+        
+        if (display_col <= ncol(display_df)) {
+          # Get original value
+          original_value <- data[i, display_col]  # Adjust offset as needed
+          
+          # Apply LaTeX formatting for PDF
+          display_df[i, display_col] <- paste0("\\textcolor{blue}{\\textbf{", 
+                                             as.character(original_value), "}}")
+        }
+      }
+    }
+  }
+  
+ 
+  # Create the table
+  kable(display_df, format = "latex", booktabs = TRUE, escape = FALSE, align = "c") %>%
+    kable_styling(latex_options = c("scale_down", "hold_position")) %>%
+    row_spec(failure_color, background = "#FD7979") %>%
+    row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
+    column_spec(3,italic = TRUE) %>%
+    footnote(general = c("PASS","  |  ", 
+                        "\\\\colorbox{Salmon}{FAILURE}","  |  ",
+                        "\\\\textcolor{Blue}{EXCEEDS THRESHOLD METRIC/S}","  |  ",
+                        "(x) - NON-CONCORDANT","  |"), 
+            general_title = "Legend:",
+            footnote_as_chunk = T, escape = F)
+}
+
+
+summary_table(wgs_summary_df)
+
+
+```
+
+
+
+
+```{r summary table result, echo = FALSE, warning = FALSE, message = FALSE}
+# create new wgs_summary_table with additional column for result
+
+wgs_summary_result <- wgs_df %>%
+  select(sample_name, failed_conditions, result) %>%
+  mutate(
+    batch_code = sub(".*_(.*)", "\\1", sample_name),
+    batch_code = sub("(\\d{4})(\\d{2})(\\d{2})(.)", "\\1-\\2-\\3_\\4", batch_code),
+    result = ifelse(result != TRUE, "Failed", "Passed")
+  ) 
+
+
+wgs_summary_result1 <- merge(wgs_summary_result, wgs_summary_df, by = "sample_name")
+
+
+wgs_summary_result2 <- wgs_summary_result1 %>%
+  select(-iso_num, -col_index, -sample_id) %>%
+  arrange(batch_code) %>%
+  mutate(
+    final_coverage = format(round(unlist(final_coverage), 1), nsmall = 1),
+    qc_final_qual_mean = format(round(unlist(qc_final_qual_mean), 1), nsmall = 1)
+  )%>%
+  relocate(batch_code, .before = sample_name)
+
+
+# append googlesheet "result" tab
+sheet_append(ss = sheet_id, sheet = "result", data = wgs_summary_result2)
+
+ 
+file_name <- paste0("data_files/2024_wgs_df_result.xlsx")
+write_xlsx(wgs_summary_result2, file_name)
+  
+
+```
+

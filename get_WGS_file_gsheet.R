@@ -18,54 +18,44 @@ conflicts_prefer(dplyr::filter)
 
 setwd("E:/DMU Projects/wgs-qc")
 
+
 # Google Sheet ID extracted from the URL
 sheet_id <- "1rOFp9VHXeAfghFU6aOOBeBSt9Q1RC5WVAdLez4HHLU4"
 
 # Read the sheet
+df_batch <- read_sheet(sheet_id, sheet = "batch")
 df_qualifyr <- read_sheet(sheet_id, sheet = "qualifyr")
+df_gambit <- read_sheet(sheet_id, sheet = "gambit")
 df_bactopia <- read_sheet(sheet_id, sheet = "bactopia-report")
+df_assembly <- read_sheet(sheet_id, sheet = "assembly-scan")
 df_checkm2 <- read_sheet(sheet_id, sheet = "checkm2")
-df_mlst <- read_sheet(sheet_id, sheet = "mlst", col_names = FALSE)
+df_mlst <- read_sheet(sheet_id, sheet = "mlst")
 df_amrfinderplus <- read_sheet(sheet_id, sheet = "amrfinderplus")
 
 
+# enter batch code
+batch_code <- dlgInput("Enter Batch Code:", Sys.info()[" "])$res
 
-
-#Get the WGS QC File
-get_batchname <- dlgInput("Enter batch number:", Sys.info()[" "])$res
+#get samplesheet file
 get_samplesheet <- dlgInput("Enter sample sheet file name:", Sys.info()[" "])$res
 
 
 
+#filter batch df
+batch_df <- df_batch[df_batch$batch_code == batch_code, ]
+sample_name <- batch_df$sample_name
+sample_name <- gsub("-", "_", sample_name, fixed=TRUE)
+
+#remove batch number from sample_name
+sample_name_clean <- sub("(.*)_[^_]*$", "\\1", sample_name)
 
 
-# Specify the path to your text file
-file_path <- paste('data_files/',get_batchname,'.txt', sep='') 
-
-# Read the IDs from the text file
-id_list <- scan(file_path, what = "")
-
-#list of query for txt file
-#id_list <- scan("to_query.txt", character(), quote = "")
-
-#change dash to underscore
-id_list <- gsub("-", "_", id_list)
-
-# Escape single quotes in the strings
-id_list <- gsub("'", "''", id_list)
-
-# Convert the list of IDs to a comma-separated string enclosed in single quotes
-#id_string <- paste0("'", paste(id_list, collapse = "','"), "'")
-
-
-
-
-#merge qualifyr, checkm2 and bactopia results
+#merge qualifyr, gambit,checkm2 and bactopia results
 #rename column
-colnames(df_qualifyr)[which(names(df_qualifyr) == "bactinspector.species.metric_value")] <- "species"
-colnames(df_qualifyr)[which(names(df_qualifyr) == "sample_name")] <- "name"
+colnames(df_gambit)[which(names(df_gambit) == "sample")] <- "name"
+colnames(df_assembly)[which(names(df_assembly) == "sample")] <- "name"
 colnames(df_bactopia)[which(names(df_bactopia) == "sample")] <- "name"
-colnames(df_bactopia)[which(names(df_bactopia) == "species")] <- "species_name"
+
 
 #checkm2 column names to lower
 names(df_checkm2) <- tolower(names(df_checkm2))
@@ -73,14 +63,29 @@ names(df_checkm2) <- tolower(names(df_checkm2))
 #remove ".fna"
 df_checkm2$name <- gsub(".fna", "", df_checkm2$name, fixed=TRUE)
 
-#merge df
-quality_report <- merge(df_qualifyr, df_checkm2, by = "name")
-quality_report <- merge(quality_report, df_bactopia, by = "name")
+
+# Get species name
+df_gambit$species <- ifelse(is.na(df_gambit$predicted.rank) | df_gambit$predicted.rank == "genus", df_gambit$next.name, df_gambit$predicted.name)
 
 
-wgs_df <- subset(quality_report, select = c(name, species, completeness, contamination, rank, qc_final_coverage,
-                                            assembler_total_contig_length, gc_content , assembler_total_contig,
-                                            assembler_n50_contig_length, qc_final_qual_mean))
+# Compute total GC Content
+df_assembly$gc_content <- as.numeric(df_assembly$contig_percent_g) + as.numeric(df_assembly$contig_percent_c) 
+
+
+
+# Subset Columns per dataframe
+gambit_sub_df <- subset(df_gambit, select = c(name, species))
+checkm2_sub_df <- subset(df_checkm2, select = c(name, completeness, contamination))
+assembly_sub_df <- subset(df_assembly, select = c(name, total_contig, total_contig_length, gc_content, n50_contig_length))
+bactopia_sub_df <- subset(df_bactopia, select = c(name, qc_original_total_bp, qc_final_qual_mean))
+
+
+
+# put all data frames into list
+df_list <- list(gambit_sub_df, checkm2_sub_df, assembly_sub_df, bactopia_sub_df)
+
+# merge all data frames in list
+wgs_df <- df_list %>% reduce(full_join, by='name')
 
 
 wgs_df$name <- gsub("-", "_", wgs_df$name, fixed=TRUE)
@@ -88,27 +93,14 @@ wgs_df$name <- toupper(wgs_df$name)
 
 
 
-#filter wgs_df based on id_string
-wgs_df <- wgs_df[wgs_df$name %in% id_list, ]
-
-
-
-
-# Define a function to remove the second underscore if the string doesn't contain the specific text
-remove_second_underscore <- function(x) {
-  if (!grepl('UTP', x)) {
-    x <- gsub("^(.*?_.*?)_(.*)", "\\1\\2", x)
-  }
-  return(x)
-}
+#filter wgs_df based on sample_name
+wgs_df <- wgs_df[wgs_df$name %in% sample_name, ]
 
 
 
 
 # Apply the function to the column of strings
-wgs_df <- wgs_df %>%
-  rename(sample_id = name) %>%
-  mutate(sample_id = sapply(sample_id, remove_second_underscore))
+wgs_df <- wgs_df %>% rename(sample_id = name)
 
 
 
@@ -122,9 +114,10 @@ if (stc_sample_count !=0){
 
 
 
-referred_df <- read_xlsx("data_files/Combined Data on Referred Isolates_06.13.25.xlsx", sheet="ARSRL")
+referred_sheet_id <- "1JKtyRyLh0-ck2xCk0oIH4iidgs21996UKj69lvvlXAU"
+referred_df <- read_sheet(referred_sheet_id, sheet = 1)
 referred_df <- subset(referred_df, select = c(accession_no,arsrl_org))
-result <- referred_df[referred_df$accession_no %in% id_list, ]
+result <- referred_df[referred_df$accession_no %in% sample_name_clean, ]
 colnames(result) <- c('sample_id','arsrl_org') 
 
 # Returns string without leading or trailing white space
@@ -147,7 +140,7 @@ utp_sample_count <- length(utp_sample)
 
 
 if(utp_sample_count !=0){
-  sample_id = utp_sample
+  sample_id = sub("(.*)_[^_]*$", "\\1", utp_sample)
   arsrl_org = "Escherichia coli"
   
   arsrl_result_df <- result %>% 
@@ -168,6 +161,7 @@ if(stc_sample_count !=0){
   stc_df <- stc_df[stc_df$sample_id %in% stc_sample, ]
   
   stc_df$sample_id <- gsub("STC", "STC_", stc_df$sample_id, fixed=TRUE)
+  stc_df$sample_id <- sub("(.*)_[^_]*$", "\\1", stc_df$sample_id)
   
   arsrl_result_df <- rbind(arsrl_result_df,stc_df)
   
@@ -180,13 +174,29 @@ bbr_sample_count <- length(bbr_sample)
 
 #manually add result for QC_BBR
 if(bbr_sample_count !=0){
-  sample_id = bbr_sample
+  sample_id = sub("(.*)_[^_]*$", "\\1", bbr_sample)
   arsrl_org = "Bordetella bronchiseptica"
   
   arsrl_result_df <- arsrl_result_df %>% 
     add_row(sample_id = sample_id, arsrl_org=arsrl_org)
   
 }
+
+
+#Check if QC_BBR sample is present in the id list
+vc_sample <- grep("VC", wgs_df[['sample_id']], value = TRUE)
+vc_sample_count <- length(vc_sample)
+
+#manually add result for QC_BBR
+if(vc_sample_count !=0){
+  sample_id = sub("(.*)_[^_]*$", "\\1", vc_sample)
+  arsrl_org = "Neisseria gonorrhoeae"
+  
+  arsrl_result_df <- arsrl_result_df %>% 
+    add_row(sample_id = sample_id, arsrl_org=arsrl_org)
+  
+}
+
 
 
 wgs_df1 <- wgs_df
@@ -196,8 +206,8 @@ wgs_df1 <- wgs_df
 
 
 if(nrow(wgs_df) != 0){
-  rmarkdown::render("wgs_qc_report_ver5.Rmd",
-                    output_file = paste("qualifyr_report_",get_batchname, '.pdf', sep='')
+  rmarkdown::render("wgs_qc_report.Rmd",
+                    output_file = paste("ARSRL_WGS_QC_report_",batch_code, '.pdf', sep='')
   ) 
 }else{
   cat("No file found")
