@@ -21,7 +21,7 @@ setwd("E:/DMU Projects/wgs-qc")
 
 
 # Google Sheet ID extracted from the URL
-sheet_id <- "1rOFp9VHXeAfghFU6aOOBeBSt9Q1RC5WVAdLez4HHLU4"
+sheet_id <- "1NHu-RIgDeTPKgrnTTHS9qVbCe04tIeYX6k73Jm93gDw"
 
 # Read the sheet
 df_batch <- read_sheet(sheet_id, sheet = "batch")
@@ -132,6 +132,10 @@ wgs_df$org_code_clean[grepl("Staphylococcus",wgs_df$wgs_id)] = "sau"
 wgs_df$org_code_clean[grepl("Staphylococcus epidermidis",wgs_df$wgs_id)] = "sep"
 wgs_df$org_code_clean[grepl("Raoultella planticola",wgs_df$wgs_id)] = "kpn"
 
+
+
+#file_name <- paste0("data_files/historical_summary_wgs_df.xlsx")
+#write_xlsx(wgs_df, file_name)
 
 ## Create reference data with ±2% tolerance built in
 bactopia_genome_size <- data.frame(

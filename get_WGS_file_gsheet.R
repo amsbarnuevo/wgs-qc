@@ -20,7 +20,7 @@ setwd("E:/DMU Projects/wgs-qc")
 
 
 # Google Sheet ID extracted from the URL
-sheet_id <- "1rOFp9VHXeAfghFU6aOOBeBSt9Q1RC5WVAdLez4HHLU4"
+sheet_id <- "1NHu-RIgDeTPKgrnTTHS9qVbCe04tIeYX6k73Jm93gDw"
 
 # Read the sheet
 df_batch <- read_sheet(sheet_id, sheet = "batch")
@@ -204,10 +204,17 @@ if(vc_sample_count !=0){
 
 
 
+# Referred isolates with WGS result, but the referred data have not been endorsed for encoding to DMU
+arsrl_id <- arsrl_result_df$sample_id
+no_referred_data <- setdiff(arsrl_id, sample_name_clean)
+
+
+
+
 wgs_df1 <- wgs_df
 #wgs_df <- wgs_df1
-
-
+arsrl_result_df1 <- arsrl_result_df
+#arsrl_result_df <- arsrl_result_df1
 
 
 if(nrow(wgs_df) != 0){

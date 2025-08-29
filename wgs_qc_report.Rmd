@@ -246,10 +246,6 @@ if (stc_sample_count !=0){
 WGS_exp_name <- unique(wgs_samplesheet[['experiment name']])
 
 
-
-#not identified sample
-wgs_df$wgs_id[is.na(wgs_df$wgs_id)] <- 'Not Identified'
-
 ```
 
 
@@ -263,29 +259,33 @@ wgs_df$wgs_id[is.na(wgs_df$wgs_id)] <- 'Not Identified'
 \renewcommand{\arraystretch}{1.2}
 
 ```{r qc listing, echo = FALSE, warning = FALSE, message = FALSE}
-#filter dataframe based on the sample_id present in the WGS dataframe
-wgs_samplesheet_good <- wgs_samplesheet[wgs_samplesheet$sample_id %in% wgs_df$sample_id , ]
-wgs_samplesheet_good <- subset(wgs_samplesheet_good, select = c('sample_id','description'))
+arsrl_result_df1 <- arsrl_result_df
+#arsrl_result_df <- arsrl_result_df1
 
-#merge wgs df and samplesheet
-wgs_df <- merge(unique(wgs_df), unique(wgs_samplesheet_good), by = "sample_id", all.x= TRUE) 
+wgs_samplesheet_subset <- subset(wgs_samplesheet, select = c('sample_id','description'))
 
-
-retain_column <- c('iso_num','sample_id','wgs_id','description')
+retain_column <- c('iso_num','sample_id','wgs_id')
 wgs_result_df <- subset(wgs_df, select = retain_column)
 
-wgs_result_df1 <-wgs_result_df
-#wgs_result_df <-wgs_result_df1
 
-#remove batch name in sample_id
-wgs_result_df$sample_id <- sub("(.*)_[^_]*$", "\\1", wgs_result_df$sample_id)
+
+# paste batch number to arsrl result sample_id
+arsrl_result_df$sample_id <- paste(arsrl_result_df$sample_id, batch_name_clean, sep = "_")
+
+
+#merge  and samplesheet
+arsrl_result_df <- merge(unique(arsrl_result_df), unique(wgs_samplesheet_subset), by = "sample_id", all.x= TRUE) 
+
+
 
 #merge ARSRL result and WGS result
 qc_listing_df <- merge(unique(arsrl_result_df), unique(wgs_result_df), by = "sample_id", all.x= TRUE) 
 
+#not identified sample
+qc_listing_df$wgs_id[is.na(qc_listing_df$wgs_id)] <- 'Not Identified'
 
 #create dataframe ARSRL result with no WGS result
-wgs_no_result <- arsrl_result_df[!arsrl_result_df$sample_id %in% wgs_result_df$sample_id, ]
+wgs_no_result <- wgs_samplesheet[!wgs_samplesheet$sample_id %in% wgs_df$sample_id , ]
 
 
 
@@ -309,9 +309,7 @@ qc_listing_df$Genus <- sapply(qc_listing_df$arsrl_org, get_value_before_whitespa
 
 qc_listing_nc <- qc_listing_df %>%
   rowwise() %>%
-  mutate(concordant = 
-           grepl(Genus, wgs_id)
-         )
+  mutate(concordant = ifelse(wgs_id != "Not Identified", grepl(Genus, wgs_id), TRUE))
 
 
 #sort wgs df and qc listing df by row number
@@ -332,15 +330,18 @@ wgs_df$concordant <- qc_listing_nc$concordant[match(wgs_df$sample_id, paste0(qc_
 #remove genus column
 qc_listing_df = subset(qc_listing_df, select = -c(Genus) )
 
-qc_listing_df$sample_id <- gsub("_", "\\_", qc_listing_df$sample_id, fixed = TRUE)
+#remove batch name in sample_id
+qc_listing_df$sample_id <- sub("(.*)_[^_]*$", "\\1", qc_listing_df$sample_id)
+
+#qc_listing_df$sample_id <- gsub("_", "\\_", qc_listing_df$sample_id, fixed = TRUE)
 
 
 # rename columns
-colnames(qc_listing_df) <- c('Sample ID','ARSRL','Isolate No.','WGS','Description')
+colnames(qc_listing_df) <- c('Sample ID','ARSRL','Description','Isolate No.','WGS')
 
 
 # arrange columns
-qc_listing_df <- qc_listing_df[, c(3,1,5,2,4)] 
+qc_listing_df <- qc_listing_df[, c(4,1,3,2,5)] 
 
 
 
@@ -380,7 +381,8 @@ wgs_lowreads <- subset(wgs_lowreads, select = c('sample_id','description'))
 if (nrow(wgs_lowreads != 0)){
   lowreads_table <- wgs_lowreads
   lowreads_table$remarks <- c("low read count")
-  #lowreads_table$sample_id <- str_replace_all(lowreads_table$sample_id, fixed("_"), "\\_")
+  #remove batch name in sample_id
+  lowreads_table$sample_id <- sub("(.*)_[^_]*$", "\\1", lowreads_table$sample_id)
   colnames(lowreads_table) <- c('Sample ID','Description','Remarks') 
   
   kable(lowreads_table,  "latex", booktabs = T, align = "c") %>%
@@ -553,12 +555,13 @@ $\\$ $\\$ $\\$ $\color{red}{\normalsize\textbf{RECOMMENDATION:}}$
 
 ```{r recommendation table ,echo=FALSE, message=FALSE, warning=FALSE}
 wgs_qc <- qc_listing_nc
-wgs_qc$failed_conditions = wgs_df$failed_conditions[match(paste0(qc_listing_nc$sample_id, "_", batch_name_clean), wgs_df$sample_id)]
+wgs_qc$failed_conditions = wgs_df$failed_conditions[match(wgs_qc$sample_id, wgs_df$sample_id)]
 
 reco_df <- wgs_qc %>%
   filter(!is.na(failed_conditions)|concordant == FALSE) %>%
   select(sample_id, failed_conditions, concordant) %>%
   mutate(
+     sample_id = sub("(.*)_[^_]*$", "\\1", sample_id),
     remarks = ifelse(concordant != TRUE, "Non-concordant result - Check Label", "For repeat testing")
   ) %>%
   select(-concordant) %>%
@@ -585,6 +588,9 @@ if (nrow(wgs_lowreads) != 0){
     summarise(sample_id = paste(sample_id, collapse = ", "),
             Remarks = paste(unique(remarks), collapse = "; "),
             .groups = 'drop')
+  
+  # arrange columns
+  wgs_lowreads_reco <- wgs_lowreads_reco[, c(2,1,3)] 
   
   reco_df <- rbind(reco_df, wgs_lowreads_reco)
 }
