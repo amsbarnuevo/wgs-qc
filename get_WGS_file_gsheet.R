@@ -114,10 +114,9 @@ wgs_df <- wgs_df %>% rename(sample_id = name)
 stc_sample <- grep("STC", wgs_df[['sample_id']], value = TRUE)
 stc_sample_count <- length(stc_sample)
 
-if (stc_sample_count !=0){
-  wgs_df$sample_id <- gsub("STC", "STC_", wgs_df$sample_id, fixed=TRUE)
-}
-
+#if (stc_sample_count !=0){
+#  wgs_df$sample_id <- gsub("STC", "STC_", wgs_df$sample_id, fixed=TRUE)
+#}
 
 
 
@@ -162,13 +161,19 @@ if(utp_sample_count !=0){
 
 #manually add result for STC
 if(stc_sample_count !=0){
-  stc_df <- read_xlsx("data_files/ARSRL_SatScan_Results.xlsx")
-  stc_df <- stc_df[stc_df$sample_id %in% stc_sample, ]
+  #stc_df <- read_xlsx("data_files/ARSRL_SatScan_Results.xlsx")
+  #stc_df <- stc_df[stc_df$sample_id %in% stc_sample, ]
   
-  stc_df$sample_id <- gsub("STC", "STC_", stc_df$sample_id, fixed=TRUE)
-  stc_df$sample_id <- sub("(.*)_[^_]*$", "\\1", stc_df$sample_id)
+  #stc_df$sample_id <- gsub("STC", "STC_", stc_df$sample_id, fixed=TRUE)
+  #stc_df$sample_id <- sub("(.*)_[^_]*$", "\\1", stc_df$sample_id)
   
-  arsrl_result_df <- rbind(arsrl_result_df,stc_df)
+  #arsrl_result_df <- rbind(arsrl_result_df,stc_df)
+  
+  sample_id = sub("(.*)_[^_]*$", "\\1", stc_sample)
+  arsrl_org = "Burkholderia cepacia"
+  
+  arsrl_result_df <- arsrl_result_df %>% 
+    add_row(sample_id = sample_id, arsrl_org=arsrl_org)
   
 }
 
@@ -206,8 +211,19 @@ if(vc_sample_count !=0){
 
 # Referred isolates with WGS result, but the referred data have not been endorsed for encoding to DMU
 arsrl_id <- arsrl_result_df$sample_id
-no_referred_data <- setdiff(arsrl_id, sample_name_clean)
+no_referred_data_id <- setdiff(sample_name_clean, arsrl_id)
 
+
+
+#manually add no referred data
+if(length(no_referred_data_id) !=0){
+  sample_id = no_referred_data_id
+  arsrl_org = "No Referred Data"
+  
+  arsrl_result_df <- arsrl_result_df %>% 
+    add_row(sample_id = sample_id, arsrl_org=arsrl_org)
+  
+}
 
 
 

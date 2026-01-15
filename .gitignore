@@ -1,3 +1,6 @@
 data_files/
 *.pdf
 /Combined Referred Isolates_2007-2025
+*.log
+*.tex
+*.xlsx

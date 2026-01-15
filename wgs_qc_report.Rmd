@@ -92,6 +92,8 @@ wgs_df$org_code_clean[grepl("Burkholderia",wgs_df$wgs_id)] = "pce"
 wgs_df$org_code_clean[grepl("Staphylococcus",wgs_df$wgs_id)] = "sau"
 wgs_df$org_code_clean[grepl("Staphylococcus epidermidis",wgs_df$wgs_id)] = "sep"
 wgs_df$org_code_clean[grepl("Raoultella planticola",wgs_df$wgs_id)] = "kpn"
+wgs_df$org_code_clean[grepl("Serratia marcescens",wgs_df$wgs_id)] = "sma"
+wgs_df$org_code_clean <- ifelse(wgs_df$wgs_id == "Escherichia/Shigella", "eco", wgs_df$org_code_clean)
 
 
 
@@ -237,9 +239,9 @@ wgs_samplesheet$sample_id <- paste(wgs_samplesheet$sample_id, batch_name_clean, 
 stc_sample <- grep("STC", wgs_samplesheet[['sample_id']], value = TRUE)
 stc_sample_count <- length(stc_sample)
 
-if (stc_sample_count !=0){
-  wgs_samplesheet$sample_id <- gsub("STC", "STC_", wgs_samplesheet$sample_id, fixed=TRUE)
-}
+#if (stc_sample_count !=0){
+#  wgs_samplesheet$sample_id <- gsub("STC", "STC_", wgs_samplesheet$sample_id, fixed=TRUE)
+#}
 
 
 #Get experiment name
@@ -259,12 +261,12 @@ WGS_exp_name <- unique(wgs_samplesheet[['experiment name']])
 \renewcommand{\arraystretch}{1.2}
 
 ```{r qc listing, echo = FALSE, warning = FALSE, message = FALSE}
-arsrl_result_df1 <- arsrl_result_df
+#arsrl_result_df1 <- arsrl_result_df
 #arsrl_result_df <- arsrl_result_df1
 
 wgs_samplesheet_subset <- subset(wgs_samplesheet, select = c('sample_id','description'))
 
-retain_column <- c('iso_num','sample_id','wgs_id')
+retain_column <- c('sample_id','wgs_id')
 wgs_result_df <- subset(wgs_df, select = retain_column)
 
 
@@ -279,7 +281,13 @@ arsrl_result_df <- merge(unique(arsrl_result_df), unique(wgs_samplesheet_subset)
 
 
 #merge ARSRL result and WGS result
-qc_listing_df <- merge(unique(arsrl_result_df), unique(wgs_result_df), by = "sample_id", all.x= TRUE) 
+qc_listing_df <- merge(unique(wgs_result_df), unique(arsrl_result_df), by = "sample_id", all.x= TRUE) 
+
+# Extract the desired order from df2
+ordered_vector <- wgs_result_df$sample_id
+
+# Reorder df1 based on the order_id column matching the ordered_vector
+qc_listing_df <- qc_listing_df[match(ordered_vector, qc_listing_df$sample_id), ]
 
 #not identified sample
 qc_listing_df$wgs_id[is.na(qc_listing_df$wgs_id)] <- 'Not Identified'
@@ -291,12 +299,13 @@ wgs_no_result <- wgs_samplesheet[!wgs_samplesheet$sample_id %in% wgs_df$sample_i
 
 #format wgs_no_result dataframe
 if (nrow(wgs_no_result != 0)){
-  qc_listing_df$description <- ifelse(is.na(qc_listing_df$description),wgs_samplesheet_good$description[match(paste0(wgs_no_result$sample_id, "_", batch_name_clean), wgs_samplesheet_good$sample_id)], qc_listing_df$description)
+  qc_listing_df$description <- ifelse(is.na(qc_listing_df$description),wgs_samplesheet_subset$description[match(paste0(wgs_no_result$sample_id, "_", batch_name_clean), wgs_samplesheet_subset$sample_id)], qc_listing_df$description)
   
-  qc_listing_df$iso_num <- ifelse(is.na(qc_listing_df$iso_num), nrow(qc_listing_df), qc_listing_df$iso_num)
+  #qc_listing_df$iso_num <- ifelse(is.na(qc_listing_df$iso_num), nrow(qc_listing_df), qc_listing_df$iso_num)
 }
 
-
+# add row number
+qc_listing_df$iso_num <- seq.int(nrow(qc_listing_df))
 
 # Define a function to get the part before the first white space
 get_value_before_whitespace <- function(x) {
@@ -310,6 +319,10 @@ qc_listing_df$Genus <- sapply(qc_listing_df$arsrl_org, get_value_before_whitespa
 qc_listing_nc <- qc_listing_df %>%
   rowwise() %>%
   mutate(concordant = ifelse(wgs_id != "Not Identified", grepl(Genus, wgs_id), TRUE))
+
+
+# Result with no referred data
+qc_listing_nc$concordant <- ifelse(qc_listing_nc$arsrl_org == "No Referred Data", TRUE, qc_listing_nc$concordant)
 
 
 #sort wgs df and qc listing df by row number
@@ -337,11 +350,11 @@ qc_listing_df$sample_id <- sub("(.*)_[^_]*$", "\\1", qc_listing_df$sample_id)
 
 
 # rename columns
-colnames(qc_listing_df) <- c('Sample ID','ARSRL','Description','Isolate No.','WGS')
+colnames(qc_listing_df) <- c('Sample ID','WGS','ARSRL','Description','Isolate No.')
 
 
 # arrange columns
-qc_listing_df <- qc_listing_df[, c(4,1,3,2,5)] 
+qc_listing_df <- qc_listing_df[, c(5,1,4,3,2)] 
 
 
 
@@ -674,26 +687,25 @@ names(qc_summary_df)[names(qc_summary_df) == 'n'] <- 'number'
 qc_summary_df <- qc_summary_df[order(-qc_summary_df$number),]
 
 # count not identified WGS result
-qc_not_identified <- ifelse(qc_summary_df$WGS == 'Not Identified', qc_summary_df$number,0)
-qc_not_identified <- unique(qc_not_identified)
+qc_not_identified <- qc_summary_df$number[qc_summary_df$WGS == "Not Identified"]
 
 
-qc_tl <- ifelse(qc_not_identified == 0, nrow(qc_listing_df), nrow(qc_listing_df) - qc_not_identified)
-qc_distinct <- ifelse(qc_not_identified == 0, nrow(qc_summary_df), nrow(qc_summary_df) - qc_not_identified)
-
-
+qc_tl <- ifelse(length(qc_not_identified) == 0, nrow(qc_listing_df), nrow(qc_listing_df) - qc_not_identified)
+qc_distinct <- ifelse(length(qc_not_identified) == 0, nrow(qc_summary_df), nrow(qc_summary_df) - 1)
 
 qc_pass <- nrow(wgs_df[wgs_df$result == TRUE, ])
-qc_failed <- nrow(wgs_df[wgs_df$result == FALSE, ])
+qc_failed <- ifelse(length(qc_not_identified) == 0, nrow(wgs_df[wgs_df$result == FALSE, ]), nrow(wgs_df[wgs_df$result == FALSE, ]) + qc_not_identified)
 
-qc_pass_pc <- if (qc_pass != 0) (qc_pass/qc_tl) * 100 else 0
+qc_overall <- ifelse(length(qc_not_identified) == 0, qc_tl, qc_tl + qc_not_identified)
+
+qc_pass_pc <- if (qc_pass != 0) (qc_pass/qc_overall) * 100 else 0
 qc_pass_pc <- format(round(qc_pass_pc, 2), nsmall = 2)
 
-
-qc_failed_pc <- if (qc_failed != 0) (qc_failed/qc_tl) * 100 else 0
+qc_failed_pc <- if (qc_failed != 0) (qc_failed/qc_overall) * 100 else 0
 qc_failed_pc <- format(round(qc_failed_pc, 2), nsmall = 2)
 
 qc_concordance <- nrow(qc_listing_nc[qc_listing_nc$concordant == TRUE, ])
+qc_concordance <- if (length(qc_not_identified) != 0) qc_concordance - qc_not_identified else qc_concordance
 qc_cn_pc <- if (qc_concordance != 0) (qc_concordance/qc_tl) * 100 else 0
 qc_cn_pc <- format(round(qc_cn_pc, 2), nsmall = 2)
 
@@ -730,20 +742,10 @@ qc_summary_df %>%
 \renewcommand{\arraystretch}{1.2}
 
 ```{r pie_chart, echo=FALSE, message=FALSE, warning=FALSE}
-# Calculate the counts for each "wgs_id"
-wgs_id_count <- table(wgs_df$wgs_id)
+summary_id <- qc_summary_df
+colnames(summary_id) <- c('WGS_ID','Frequency')
 
-# Create a data frame with "wgs_id" and their counts
-wgs_count_df <- data.frame(wgs_id = names(wgs_id_count), Frequency = as.vector(wgs_id_count))
-
-# Sort the data frame by the "Frequency" column in descending order
-wgs_count_df <- wgs_count_df[order(-wgs_count_df$Frequency),]
-
-# Now, set the factor levels in reverse order for correct sorting
-wgs_count_df$wgs_id <- factor(wgs_count_df$wgs_id, levels = rev(wgs_count_df$wgs_id))
-
-
-ggplot(data = wgs_count_df, aes(x = " ", y = Frequency, fill = wgs_id)) +
+ggplot(data = summary_id, aes(x = " ", y = Frequency, fill = WGS_ID)) +
   geom_col(color = "black") +
   theme(legend.text = element_text(size=5)) +
   geom_text(aes(label = Frequency),
@@ -968,14 +970,17 @@ for(i in mlst_df_list) {
 
 ```{r no_mlst_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 #list existing sample_id in the mlst table
-no_mlst <- wgs_df$wgs_id[!(wgs_df$wgs_id %in% mlst_df_clean$wgs_id)]
+no_mlst <- sample_name_clean[!(sample_name_clean %in% mlst_df_clean$sample_id)]
 
 if (length(no_mlst) !=0){
-  sample_id <- wgs_df$sample_id[!(wgs_df$sample_id %in% mlst_df_clean$sample_id)]
-  wgs_id <- no_mlst
+  sample_id <- paste(no_mlst, batch_name_clean, sep = "_")
+  #sample_id <<- wgs_df$sample_id[(wgs_df$sample_id %in% no_mlst)]
+  wgs_id <- wgs_df$wgs_id[(wgs_df$sample_id %in% sample_id)]
+  sample_id_clean <- sub("(.*)_[^_]*$", "\\1", sample_id)
   species <- "No MLST result"
   
-  df <- data.frame(sample_id, wgs_id, species)
+  df <- data.frame(sample_id_clean, wgs_id, species)
+  names(df)[names(df) == 'sample_id_clean'] <- 'sample_id'
   
   no_mlst_table <- kable(df,align = "c", row.names = FALSE) %>%
     kable_styling(position = "left") %>%
