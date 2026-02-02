@@ -64,6 +64,7 @@ conflicts_prefer(dplyr::filter)
 
 
 
+
 ```{r load-data, echo = FALSE, warning = FALSE, message = FALSE}
 # --- rename species column to wgs_org ---
 wgs_df <- wgs_result_df %>% rename(wgs_id = species)
@@ -136,7 +137,6 @@ wgs_samplesheet <- wgs_samplesheet%>%
   select(sample_id, description)  # optional: remove helper column
 
 ```
-
 
 
 \normalsize Batch Name: `r batch_code`
@@ -357,6 +357,13 @@ bactscout_df_value <- df_bactscout_mod %>%
   relocate(read_length, .before = "read_q30_rate")
 
 
+# Change MLST ST column NUll value to Blank
+bactscout_df_value$mlst_st <- lapply(bactscout_df_value$mlst_st, function(x) {
+  if (is.null(x)) "" else x
+})
+
+
+
 # --- Get Isolate number by merging ---
 bactscout_df_merge <- merge(bactscout_df_value, arsrl_id_df, by ="sample_id")
 
@@ -475,7 +482,7 @@ if(length(no_bactscout_result) != 0){
 
 
 
-$\\$ $\\$ $\\$ $\color{red}{\normalsize\textbf{RECOMMENDATION:}}$
+$\\$ $\\$ $\\$ $\color{red}{\normalsize\textbf{SUMMARY OF RESULT:}}$
 
 
 ```{r recommendation-table ,echo=FALSE, message=FALSE, warning=FALSE}
@@ -502,15 +509,295 @@ reco_df <- bind_rows(
   summarise(
     failed_conditions = paste(unique(failed_conditions), collapse = ", "),
     .groups = "drop"
-  ) %>%
-  mutate(remarks = "For repeat testing")
+  )
 
 
 
 if (nrow(reco_df) == 0) { failed_conditions <- "No further action required for this batch."}
 
-colnames(reco_df) <- c('Sample ID','Reason - Failed Metrics','Remarks')
+colnames(reco_df) <- c('Sample ID','Reason - Failed Metrics')
 reco_table <- reco_df %>% 
+  kable(
+    format = "latex",
+    booktabs = TRUE,
+    escape = TRUE,  # Keep FALSE since you pre-escaped underscores
+    align = c("l", "c")
+  ) %>%
+  kable_styling(
+    position = "left",
+    latex_options = c("striped", "hold_position")
+  ) %>%
+  column_spec(1, width = "6cm") %>%
+  column_spec(2, width = "6cm") %>%
+  row_spec(0, background = "#D4D4D4", bold = TRUE)
+
+  reco_table  
+
+
+```
+
+
+\end{landscape}
+
+
+
+
+\begin{landscape}
+\Large ASSEMBLY - QC
+\fontsize{7}{8}
+\selectfont
+\captionsetup[table]{labelformat=empty}
+\renewcommand{\arraystretch}{1.2}
+
+```{r assembly-qc, echo = FALSE, warning = FALSE, message = FALSE}
+assembly_qc <- merge(wgs_df, arsrl_id_df, by = "sample_id")
+
+# --- Read samplesheet ---
+qualibact_data <- read_csv("data_files/qualibact_filtered_metrics.csv") %>%
+  mutate(species = gsub("_", " ", species))
+
+# --- Prepare reference table: only species present in assembly_qc ---
+qualibact_ref <- qualibact_data %>%
+  filter(species %in% assembly_qc$wgs_id) %>%
+  mutate(metric_clean = str_to_lower(metric))
+
+
+# --- Map qualibact metrics to assembly_qc column names ---
+metric_map <- c(
+  "completeness"             = "completeness",
+  "contamination"            = "contamination",
+  "total_coding_sequences"   = "total_coding_sequences",
+  "genome_size"              = "genome_size",
+  "gc_content"               = "gc_content",
+  "n50"                      = "n50_contig_length",
+  "no_of_contigs"            = "total_contig"
+)
+
+# --- QC check function ---
+check_bounds <- function(value, lower, upper) {
+  case_when(
+    !is.na(lower) & value < lower ~ "FAILED",
+    !is.na(upper) & value > upper ~ "FAILED",
+    TRUE                          ~ "PASSED"
+  )
+}
+
+# --- Apply QC checks ---
+assembly_qc_checked <- assembly_qc
+
+for (m in names(metric_map)) {
+
+  ref <- qualibact_ref %>%
+    filter(metric_clean == m) %>%
+    select(species, lower_bounds, upper_bounds)
+
+  assembly_qc_checked <- assembly_qc_checked %>%
+    left_join(ref, by = c("wgs_id" = "species")) %>%
+    mutate(
+      !!paste0(metric_map[m], "_qc") :=
+        check_bounds(.data[[metric_map[m]]], lower_bounds, upper_bounds)
+    ) %>%
+    select(-lower_bounds, -upper_bounds)
+}
+
+
+
+# --- List all FAILED QC ---
+assembly_qc_checked <- assembly_qc_checked %>%
+  rowwise() %>%
+  mutate(
+    condition_checks = list(c(
+      "Completeness" = completeness_qc == "PASSED",
+      "Contamination" = contamination_qc == "PASSED",
+      "Total Coding Sequences" = total_coding_sequences_qc == "PASSED",
+      "Genome Size" = genome_size_qc == "PASSED",
+      "GC Content" = gc_content_qc == "PASSED",
+      "N50" = n50_contig_length_qc == "PASSED",
+      "Total Contigs" = total_contig_qc == "PASSED"
+    )),
+    # Set result to FALSE if any condition is FALSE or NA
+    result = all(unlist(condition_checks), na.rm = FALSE),
+    
+    # Only list failed conditions (FALSE), remove NA
+    failed_conditions = {
+      cond_values <- unlist(condition_checks)
+      failed <- names(cond_values[!is.na(cond_values) & cond_values == FALSE])
+      if (length(failed) == 0) NA_character_ else paste(failed, collapse = ", ")
+    }
+  ) %>%
+  ungroup()
+
+
+
+# Get raw reads result from bactscout_df_result
+assembly_qc_checked$raw_reads_result <- bactscout_df_result$a_final_status[bactscout_df_result$name == assembly_qc_checked$sample_id]
+
+# condition assembly qc result
+assembly_qc_checked <- assembly_qc_checked %>%
+  mutate(assembly_result = ifelse(result == TRUE, "PASSED", "FAILED"))
+
+file_name <- paste0("data_files/assembly_qc_checked.xlsx")
+write_xlsx(assembly_qc_checked, file_name)
+
+```
+
+
+```{r aasembly-qc-graph, echo = FALSE, warning = FALSE, message = FALSE}
+# --- Create new column to check final status with warning status and list column indices with failed results ---
+assembly_qc_result <- assembly_qc_checked %>%
+  select(iso_num, sample_id, wgs_id, completeness_qc, contamination_qc, total_coding_sequences_qc, 
+        genome_size_qc, gc_content_qc, n50_contig_length_qc, total_contig_qc)
+
+assembly_qc_result$failed_idx <- apply(assembly_qc_result, 1, function(row) {
+  failed_cols <- which(row[-c(1:3)] == "FAILED") # exclude name and species
+    # Adjust index to match original dataframe
+    failed_cols <- failed_cols + 3
+    paste(failed_cols, collapse = ", ")
+})
+
+
+# --- List sample without assembly result ---
+no_assembly_result <- setdiff(sample_name, assembly_qc_result$sample_id)
+
+# --- remove text after last underscore ---
+no_assembly_result <- sub("_[^_]*$", "", no_assembly_result)
+
+
+# --- Modify dataframe ---
+assembly_qc_value <- assembly_qc_checked %>%
+  select(iso_num, sample_id, wgs_id, completeness, contamination, total_coding_sequences, 
+        genome_size, gc_content, n50_contig_length, total_contig, raw_reads_result, assembly_result) %>%
+  mutate(sample_id = sub("(.*)_[^_]*$", "\\1", sample_id))
+
+
+# Create a conversion function to convert Basepairs to MEgabasepairs
+bp_to_mb <- function(bp) {
+  x <- bp / 1e6
+  x <- format(round(x, 2), nsmall = 2)
+  x <- paste0(x, " Mb")
+  return(x)
+}
+
+assembly_qc_value$genome_size <- bp_to_mb(assembly_qc_value$genome_size)
+
+
+assembly_qc_value$sample_id <- gsub("_", "\\_", assembly_qc_value$sample_id, fixed = TRUE)
+
+# Rename and reorder columns
+colnames(assembly_qc_value) <- c("Isolate No.","Sample ID", "WGS ID", "Completeness", "Contamination", "Total Coding Sequences",
+                                 "Genome Size", "GC Content", "N50", "Total Contig", "Raw Reads Result", "Assembly Result")
+
+
+for (i in 1:nrow(assembly_qc_result)) {
+  if (!is.na(assembly_qc_result$failed_idx[i]) && nzchar(assembly_qc_result$failed_idx[i])) {
+    # Split and convert to numeric safely
+      indices <- tryCatch({
+        as.numeric(trimws(unlist(strsplit(assembly_qc_result$failed_idx[i], ","))))
+      }, error = function(e) numeric(0))
+      
+      # Remove any NAs from conversion
+      indices <- indices[!is.na(indices) & indices > 0]
+      
+      # Apply formatting to each specified column
+      for (col in indices) {
+        # Adjust column index (now accounts for renamed columns)
+        display_col <- col
+        #display_col <- col + 3  # Adjust based on your column structure
+        
+        if (display_col <= ncol(assembly_qc_value)) {
+          # Convert all columns to character (or only numeric ones)
+          assembly_qc_value[] <- lapply(assembly_qc_value, as.character)
+          
+          # Get original value
+          original_value <- assembly_qc_value[i, display_col]  # Adjust offset as needed
+          
+          # Apply LaTeX formatting for PDF
+          assembly_qc_value[i, display_col] <- as.character(paste0("\\colorbox{myred}{\\textcolor{white}{\\textbf{", original_value, "}}}")
+)
+
+        }
+        
+      }
+      
+  }
+}
+
+
+# Change Assembly Result based on Raw Reads Result
+assembly_qc_value <- assembly_qc_value %>%
+  mutate(`Assembly Result` = ifelse(`Raw Reads Result` == 'FAILED', "FAILED", `Assembly Result`))
+
+
+# Get row indices
+rows_passed_raw <- which(assembly_qc_value$`Raw Reads Result`== 'PASSED')
+rows_warning_raw <- which(assembly_qc_value$`Raw Reads Result` == 'WARNING')
+rows_failed_raw <- which(assembly_qc_value$`Raw Reads Result` == 'FAILED')
+
+rows_passed_asm <- which(assembly_qc_value$`Assembly Result`== 'PASSED')
+rows_warning_asm <- which(assembly_qc_value$`Assembly Result` == 'WARNING')
+rows_failed_asm <- which(assembly_qc_value$`Assembly Result` == 'FAILED')
+
+
+          
+assembly_qc_value <- assembly_qc_value %>%
+  mutate(
+    `Raw Reads Result` = case_when(
+      row_number() %in% rows_passed_raw   ~ cell_spec(`Raw Reads Result`, background = "#006b54", color = "white"),
+      row_number() %in% rows_warning_raw  ~ cell_spec(`Raw Reads Result`, background = "#ffd858"),
+      row_number() %in% rows_failed_raw   ~ cell_spec(`Raw Reads Result`, background = "#D2042D", color = "white"),
+      TRUE ~ `Raw Reads Result`
+      )
+    ) %>%
+  mutate(
+    `Assembly Result` = case_when(
+      row_number() %in% rows_passed_asm   ~ cell_spec(`Assembly Result`, background = "#006b54", color = "white"),
+      row_number() %in% rows_warning_asm  ~ cell_spec(`Assembly Result`, background = "#ffd858"),
+      row_number() %in% rows_failed_asm   ~ cell_spec(`Assembly Result`, background = "#D2042D", color = "white"),
+      TRUE ~ `Assembly Result`
+      )
+    )
+
+
+
+
+# --- Generate formatted table ---
+# Create the table
+assembly_qc_value %>%  
+  kable(format = "latex", booktabs = TRUE, escape = FALSE, align = "c", row.names = FALSE) %>%
+  kable_styling(latex_options = c("scale_down", "hold_position")) %>%
+  row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
+  column_spec(3,italic = TRUE) %>%
+  footnote(general = c("\\\\colorbox{mygreen}{\\\\textcolor{white}{PASSED}}","  |  ", 
+                       "\\\\colorbox{myyellow}{WARNING}","  |  ",  
+                      "\\\\colorbox{myred}{\\\\textcolor{white}{FAILED}}"), 
+          general_title = "Legend:",
+          footnote_as_chunk = T, escape = F)
+
+  
+```
+
+
+$\\$ $\\$ $\\$ $\color{red}{\normalsize\textbf{SUMMARY OF RESULTS:}}$
+
+
+```{r assembly-recommendation-table ,echo=FALSE, message=FALSE, warning=FALSE}
+assembly_failed <- assembly_qc_checked %>% filter(!is.na(failed_conditions))
+
+if (nrow(assembly_failed) !=0) {
+  assembly_reco_df <- assembly_failed %>% select(sample_id, failed_conditions) %>%
+    mutate(failed_conditions = paste(unique(failed_conditions), collapse = ", ")) %>%
+    mutate(sample_id = sub("(.*)_[^_]*$", "\\1", sample_id))
+} else {
+  sample_id <- ""
+  failed_conditions <- "No further action required for this batch."
+
+  
+  assembly_reco_df <- data.frame(sample_id,failed_conditions, remarks)
+}
+  
+
+colnames(assembly_reco_df) <- c('Sample ID','Reason - Failed Metrics')
+assembly_reco_table <- assembly_reco_df %>% 
   kable(
     format = "latex",
     booktabs = TRUE,
@@ -523,170 +810,91 @@ reco_table <- reco_df %>%
   ) %>%
   column_spec(1, width = "6cm") %>%
   column_spec(2, width = "6cm") %>%
-  column_spec(3, width = "6cm") %>%
   row_spec(0, background = "#D4D4D4", bold = TRUE)
 
-  reco_table  
+  assembly_reco_table  
 
 
 ```
 
+
+$\\$ $\\$ $\\$ $\color{red}{\normalsize\textbf{RECOMMENDATION:}}$
+
+```{r overall-recommendation-table ,echo=FALSE, message=FALSE, warning=FALSE}
+overall_reco <- assembly_qc_checked %>% 
+  filter(raw_reads_result == "FAILED" | assembly_result == "FAILED") %>%
+  select(sample_id, raw_reads_result, assembly_result) %>%
+  mutate(sample_id = sub("(.*)_[^_]*$", "\\1", sample_id)) %>%
+  group_by(raw_reads_result, assembly_result) %>%
+  summarize(sample_id = paste0(sample_id, collapse = ", "))
+
+# Generate Final Result
+overall_reco <- overall_reco %>%
+  mutate(final_result = case_when(
+    raw_reads_result == "PASSED" & assembly_result == "PASSED" ~ "PASSED",
+    raw_reads_result == "FAILED" | assembly_result == "FAILED" ~ "FAILED",
+    .default = ""
+  ))
+
+
+if (nrow(overall_reco) !=0) {
+  overall_reco_df <- overall_reco %>%
+    relocate(sample_id, .before = raw_reads_result)
+  
+  colnames(overall_reco_df) <- c("Sample ID", "Raw Reads Result", "Assembly Result", "Final Result")
+  
+  overall_reco_table <- overall_reco_df %>% 
+  kable(
+    format = "latex",
+    booktabs = TRUE,
+    escape = TRUE,  # Keep FALSE since you pre-escaped underscores
+    align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    position = "left",
+    latex_options = c("striped", "hold_position")
+  ) %>%
+  column_spec(1, width = "8cm") %>%
+  column_spec(2:4, width = "3cm") %>%
+  row_spec(0, background = "#D4D4D4", bold = TRUE)
+
+  overall_reco_table  
+  
+  
+  
+} else {
+  sample_id <- ""
+  remarks <- "No further action required for this batch."
+
+  overall_reco_df <- data.frame(sample_id,remarks)
+  colnames(overall_reco_df) <- c("Sample ID", "Remarks")
+  
+  overall_reco_table <- overall_reco_df %>% 
+  kable(
+    format = "latex",
+    booktabs = TRUE,
+    escape = TRUE,  # Keep FALSE since you pre-escaped underscores
+    align = c("l", "c", "c")
+  ) %>%
+  kable_styling(
+    position = "left",
+    latex_options = c("striped", "hold_position")
+  ) %>%
+  column_spec(1, width = "6cm") %>%
+  column_spec(2, width = "6cm") %>%
+  row_spec(0, background = "#D4D4D4", bold = TRUE)
+
+  overall_reco_table  
+}
+  
+
+
+
+
+```
 
 \end{landscape}
 
-
-\fontsize{7}{8}
-\selectfont
-\captionsetup[table]{labelformat=empty}
-\renewcommand{\arraystretch}{1.2}
-
-
-```{r qc-listing-summary-narrative, echo=FALSE, message=FALSE, warning=FALSE}
-qc_summary_df <- qc_listing_df %>% filter(!is.na(WGS))  %>% count(WGS)
-
-
-#change column name and sort
-names(qc_summary_df)[names(qc_summary_df) == 'n'] <- 'number'
-qc_summary_df <- qc_summary_df[order(-qc_summary_df$number),]
-
-# count not identified WGS result
-qc_not_identified <- qc_summary_df$number[qc_summary_df$WGS == "Not Identified"]
-
-qc_tl <- ifelse(length(qc_not_identified) == 0, nrow(qc_listing_df), nrow(qc_listing_df) - qc_not_identified)
-qc_distinct <- ifelse(length(qc_not_identified) == 0, nrow(qc_summary_df), nrow(qc_summary_df) - 1)
-
-qc_pass <- nrow(bactscout_df_result[bactscout_df_result$a_final_status == "PASSED", ])
-qc_failed <- ifelse(length(qc_not_identified) == 0, nrow(bactscout_df_result[bactscout_df_result$a_final_status == "FAILED", ]), 
-                    nrow(bactscout_df_result[bactscout_df_result$a_final_status == "FAILED", ]) + qc_not_identified)
-
-qc_overall <- ifelse(length(qc_not_identified) == 0, qc_tl, qc_tl + qc_not_identified)
-
-qc_pass_pc <- if (qc_pass != 0) (qc_pass/qc_overall) * 100 else 0
-qc_pass_pc <- format(round(qc_pass_pc, 2), nsmall = 2)
-
-qc_failed_pc <- if (qc_failed != 0) (qc_failed/qc_overall) * 100 else 0
-qc_failed_pc <- format(round(qc_failed_pc, 2), nsmall = 2)
-
-qc_concordance <- nrow(wgs_df[wgs_df$concordant == TRUE, ])
-qc_concordance <- if (length(qc_not_identified) != 0) qc_concordance - qc_not_identified else qc_concordance
-qc_cn_pc <- if (qc_concordance != 0) (qc_concordance/qc_tl) * 100 else 0
-qc_cn_pc <- format(round(qc_cn_pc, 2), nsmall = 2)
-```
-
-
-
-
-
-```{r qc listing summary table, echo=FALSE, message=FALSE, warning=FALSE}
-colnames(qc_summary_df) <- c('WGS_ID','Number')
-
-qc_summary_df %>% 
-  kable(booktabs = T, align = "lc", row.names = FALSE)%>%
-  kable_styling(position = "left") %>%
-  column_spec(1, width = "8cm", italic = TRUE) %>%
-  row_spec(0, background = "#D4D4D4",bold = TRUE)
-
-```
-
-
-
--   $\color{red}`r qc_distinct`$ distinct species were identified among $\color{red}`r qc_tl`$ isolates.
-
--   $\color{red}`r qc_pass_pc`$ % (n=`r qc_pass`) of the isolates passed the QC, while $\color{red}`r qc_failed_pc`$ % (n=`r qc_failed`) were tagged with failure.
-
--   Concordance between ARSRL and WGS species report was $\color{red}`r qc_cn_pc`$ %. $\\$
-
-
-### GRAPHS
-
-\fontsize{7}{8}
-\selectfont
-\captionsetup[table]{labelformat=empty}
-\renewcommand{\arraystretch}{1.2}
-
-
-```{r pie_chart, echo=FALSE, message=FALSE, warning=FALSE}
-summary_id <- qc_summary_df
-colnames(summary_id) <- c('WGS_ID','Frequency')
-
-ggplot(data = summary_id, aes(x = " ", y = Frequency, fill = WGS_ID)) +
-  geom_col(color = "black") +
-  theme(legend.text = element_text(size=5)) +
-  geom_text(aes(label = Frequency),
-            position = position_stack(vjust = 0.5)) +
-  xlab("") +
-  labs(fill="WGS ID") +
-  coord_polar(theta = "y") +
-  theme(axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        panel.grid  = element_blank(), 
-        legend.text = element_text(face = "italic"))
-
-```
-
-
-### Number of contigs
-
-```{r contigs_result,echo=FALSE, message=FALSE, warning=FALSE}
-# Convert class
-assembly_qc_checked$total_contig <- as.numeric(unlist(assembly_qc_checked$total_contig))
-
-# Create a new variable for color mapping
-assembly_qc_checked$status <- ifelse(assembly_qc_checked$total_contig < 500, "Passed", "Above threshold")
-
-# Plot
-ggplot(data = assembly_qc_checked) +
-  geom_point(mapping = aes(x = total_contig, y = org_code_clean, color = status)) +
-  ylab("Organisms") +
-  xlab("Number of Contigs") +
-  scale_color_manual(
-    values = c("Passed" = "#8ad879", "Above threshold" = "#f3533a"),
-    labels = c("Passed", "Above threshold")
-  ) +
-  labs(color = "Contigs")
-
-```
-
-
-### N50 Value
-
-```{r n50_result ,echo=FALSE, message=FALSE, warning=FALSE}
-# Convert class
-assembly_qc_checked$n50_contig_length <- as.numeric(unlist(assembly_qc_checked$n50_contig_length))
-
-ggplot(data = assembly_qc_checked) +
-  geom_point(mapping = aes(x = n50_contig_length, y = org_code_clean, color = ifelse(n50_contig_length_qc == "PASSED" , "#8ad879", "#f3533a"))) +
-  ylab("Organisms") +
-  xlab("N50 Value") +
-  scale_color_manual(values = c("#8ad879", "#f3533a"), labels = c("Passed", "Above threshold")) +
-  labs(color = "N50 Result") +
-  scale_x_continuous(
-  labels = scales::comma_format(big.mark = ',',
-                                 decimal.mark = '.'))
-
-
-```
-
-
-
-### Total Length
-
-```{r length_result ,echo=FALSE, message=FALSE, warning=FALSE}
-# Convert class
-assembly_qc_checked$total_contig <- as.numeric(unlist(assembly_qc_checked$total_contig))
-
-ggplot(data = assembly_qc_checked) +
-  geom_point(mapping = aes(x = total_contig, y = org_code_clean, color = ifelse(total_contig_qc == "PASSED" , "#8ad879", "#f3533a"))) +
-  ylab("Organisms") +
-  xlab("Total length Value") +
-  scale_color_manual(values = c("#8ad879", "#f3533a"), labels = c("Passed", "Above threshold")) +
-  labs(color = "Total length result") +
-  scale_x_continuous(
-  labels = scales::comma_format(big.mark = ',',
-                                 decimal.mark = '.'))
-
-
-```
 
 
 
@@ -1107,314 +1315,3 @@ if (length(no_amr) !=0){
 ```
 
 \end{landscape}
-
-
-
-\begin{landscape}
-\Large ASSEMBLY - QC
-\fontsize{7}{8}
-\selectfont
-\captionsetup[table]{labelformat=empty}
-\renewcommand{\arraystretch}{1.2}
-
-```{r assembly-qc, echo = FALSE, warning = FALSE, message = FALSE}
-assembly_qc <- merge(wgs_df, arsrl_id_df, by = "sample_id")
-
-# --- Read samplesheet ---
-qualibact_data <- read_csv("data_files/qualibact_filtered_metrics.csv") %>%
-  mutate(species = gsub("_", " ", species))
-
-# --- Prepare reference table: only species present in assembly_qc ---
-qualibact_ref <- qualibact_data %>%
-  filter(species %in% assembly_qc$wgs_id) %>%
-  mutate(metric_clean = str_to_lower(metric))
-
-
-# --- Map qualibact metrics to assembly_qc column names ---
-metric_map <- c(
-  "completeness"             = "completeness",
-  "contamination"            = "contamination",
-  "total_coding_sequences"   = "total_coding_sequences",
-  "genome_size"              = "genome_size",
-  "gc_content"               = "gc_content",
-  "n50"                      = "n50_contig_length",
-  "no_of_contigs"            = "total_contig"
-)
-
-# --- QC check function ---
-check_bounds <- function(value, lower, upper) {
-  case_when(
-    !is.na(lower) & value < lower ~ "FAILED",
-    !is.na(upper) & value > upper ~ "FAILED",
-    TRUE                          ~ "PASSED"
-  )
-}
-
-# --- Apply QC checks ---
-assembly_qc_checked <- assembly_qc
-
-for (m in names(metric_map)) {
-
-  ref <- qualibact_ref %>%
-    filter(metric_clean == m) %>%
-    select(species, lower_bounds, upper_bounds)
-
-  assembly_qc_checked <- assembly_qc_checked %>%
-    left_join(ref, by = c("wgs_id" = "species")) %>%
-    mutate(
-      !!paste0(metric_map[m], "_qc") :=
-        check_bounds(.data[[metric_map[m]]], lower_bounds, upper_bounds)
-    ) %>%
-    select(-lower_bounds, -upper_bounds)
-}
-
-
-
-# --- List all FAILED QC ---
-assembly_qc_checked <- assembly_qc_checked %>%
-  rowwise() %>%
-  mutate(
-    condition_checks = list(c(
-      "completeness" = completeness_qc == "PASSED",
-      "contamination" = contamination_qc == "PASSED",
-      "total_coding_sequences" = total_coding_sequences_qc == "PASSED",
-      "genome_size" = genome_size_qc == "PASSED",
-      "gc_content" = gc_content_qc == "PASSED",
-      "n50" = n50_contig_length_qc == "PASSED",
-      "no_of_contigs" = total_contig_qc == "PASSED"
-    )),
-    # Set result to FALSE if any condition is FALSE or NA
-    result = all(unlist(condition_checks), na.rm = FALSE),
-    
-    # Only list failed conditions (FALSE), remove NA
-    failed_conditions = {
-      cond_values <- unlist(condition_checks)
-      failed <- names(cond_values[!is.na(cond_values) & cond_values == FALSE])
-      if (length(failed) == 0) NA_character_ else paste(failed, collapse = ", ")
-    }
-  ) %>%
-  ungroup()
-
-
-file_name <- paste0("data_files/assembly_qc_checked.xlsx")
-write_xlsx(assembly_qc_checked, file_name)
-
-```
-
-
-```{r aasembly-qc-graph, echo = FALSE, warning = FALSE, message = FALSE}
-# --- Create new column to check final status with warning status and list column indices with failed results ---
-assembly_qc_result <- assembly_qc_checked %>%
-  select(iso_num, sample_id, wgs_id, completeness_qc, contamination_qc, total_coding_sequences_qc, 
-        genome_size_qc, gc_content_qc, n50_contig_length_qc, total_contig_qc)
-
-assembly_qc_result$failed_idx <- apply(assembly_qc_result, 1, function(row) {
-  failed_cols <- which(row[-c(1:3)] == "FAILED") # exclude name and species
-    # Adjust index to match original dataframe
-    failed_cols <- failed_cols + 3
-    paste(failed_cols, collapse = ", ")
-})
-
-
-# --- List sample without assembly result ---
-no_assembly_result <- setdiff(sample_name, assembly_qc_result$sample_id)
-
-# --- remove text after last underscore ---
-no_assembly_result <- sub("_[^_]*$", "", no_assembly_result)
-
-
-# --- Modify dataframe ---
-assembly_qc_value <- assembly_qc_checked %>%
-  select(iso_num, sample_id, wgs_id, completeness, contamination, total_coding_sequences, 
-        genome_size, gc_content, n50_contig_length, total_contig) %>%
-  mutate(sample_id = sub("(.*)_[^_]*$", "\\1", sample_id))
-
-
-# Create a conversion function to convert Basepairs to MEgabasepairs
-bp_to_mb <- function(bp) {
-  x <- bp / 1e6
-  x <- format(round(x, 2), nsmall = 2)
-  x <- paste0(x, " Mb")
-  return(x)
-}
-
-assembly_qc_value$genome_size <- bp_to_mb(assembly_qc_value$genome_size)
-
-
-assembly_qc_value$sample_id <- gsub("_", "\\_", assembly_qc_value$sample_id, fixed = TRUE)
-
-# Rename and reorder columns
-colnames(assembly_qc_value) <- c("Isolate No.","Sample ID", "WGS ID", "Completeness", "Contamination", "Total Coding Sequences",
-                                 "Genome Size", "GC Content", "N50", "Total Contig")
-
-
-for (i in 1:nrow(assembly_qc_result)) {
-  if (!is.na(assembly_qc_result$failed_idx[i]) && nzchar(assembly_qc_result$failed_idx[i])) {
-    # Split and convert to numeric safely
-      indices <- tryCatch({
-        as.numeric(trimws(unlist(strsplit(assembly_qc_result$failed_idx[i], ","))))
-      }, error = function(e) numeric(0))
-      
-      # Remove any NAs from conversion
-      indices <- indices[!is.na(indices) & indices > 0]
-      
-      # Apply formatting to each specified column
-      for (col in indices) {
-        # Adjust column index (now accounts for renamed columns)
-        display_col <- col
-        #display_col <- col + 3  # Adjust based on your column structure
-        
-        if (display_col <= ncol(assembly_qc_value)) {
-          # Get original value
-          original_value <- assembly_qc_value[i, display_col]  # Adjust offset as needed
-          
-          # Apply LaTeX formatting for PDF
-          assembly_qc_value[i, display_col] <- paste0("\\colorbox{myred}{\\textcolor{white}{\\textbf{",as.character(original_value),"}}}")
-
-        }
-        
-      }
-      
-  }
-}
-
-
-# --- Generate formatted table ---
-# Create the table
-assembly_qc_value %>%  
-  kable(format = "latex", booktabs = TRUE, escape = FALSE, align = "c", row.names = FALSE) %>%
-  kable_styling(latex_options = c("scale_down", "hold_position")) %>%
-  row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
-  column_spec(3,italic = TRUE) %>%
-  footnote(general = c("PASSED","  |  ", 
-                       "\\\\colorbox{myyellow}{WARNING}","  |  ",  
-                      "\\\\colorbox{myred}{\\\\textcolor{white}{FAILED}}"), 
-          general_title = "Legend:",
-          footnote_as_chunk = T, escape = F)
-
-  
-```
-
-
-$\\$ $\\$ $\\$ $\color{red}{\normalsize\textbf{RECOMMENDATION:}}$
-
-
-```{r assembly-recommendation-table ,echo=FALSE, message=FALSE, warning=FALSE}
-assembly_failed <- assembly_qc_checked %>% filter(!is.na(failed_conditions))
-
-if (nrow(assembly_failed) !=0) {
-  assembly_reco_df <- assembly_failed %>% select(sample_id, failed_conditions) %>%
-    mutate(failed_conditions = paste(unique(failed_conditions), collapse = ", ")) %>%
-    mutate(remarks = "For repeat testing")
-} else {
-  sample_id <- ""
-  failed_conditions <- ""
-  remarks <- "No further action required for this batch."
-  
-  assembly_reco_df <- data.frame(sample_id,failed_conditions, remarks)
-}
-  
-
-colnames(assembly_reco_df) <- c('Sample ID','Reason - Failed Metrics','Remarks')
-assembly_reco_table <- assembly_reco_df %>% 
-  kable(
-    format = "latex",
-    booktabs = TRUE,
-    escape = TRUE,  # Keep FALSE since you pre-escaped underscores
-    align = c("l", "c", "c")
-  ) %>%
-  kable_styling(
-    position = "left",
-    latex_options = c("striped", "hold_position")
-  ) %>%
-  column_spec(1, width = "6cm") %>%
-  column_spec(2, width = "6cm") %>%
-  column_spec(3, width = "6cm") %>%
-  row_spec(0, background = "#D4D4D4", bold = TRUE)
-
-  assembly_reco_table  
-
-
-```
-
-
-\end{landscape}
-
-
-
-
-
-\newpage
-\fontsize{7}{8}
-\selectfont
-\captionsetup[table]{labelformat=empty}
-\renewcommand{\arraystretch}{1.2}
-
-### GRAPHS
-
-### Number of contigs
-
-```{r contigs_result,echo=FALSE, message=FALSE, warning=FALSE}
-# Convert class
-assembly_qc_checked$total_contig <- as.numeric(unlist(assembly_qc_checked$total_contig))
-
-# Create a new variable for color mapping
-assembly_qc_checked$status <- ifelse(assembly_qc_checked$total_contig < 500, "Passed", "Above threshold")
-
-# Plot
-ggplot(data = assembly_qc_checked) +
-  geom_point(mapping = aes(x = total_contig, y = org_code_clean, color = status)) +
-  ylab("Organisms") +
-  xlab("Number of Contigs") +
-  scale_color_manual(
-    values = c("Passed" = "#8ad879", "Above threshold" = "#f3533a"),
-    labels = c("Passed", "Above threshold")
-  ) +
-  labs(color = "Contigs")
-
-```
-
-
-### N50 Value
-
-```{r n50_result ,echo=FALSE, message=FALSE, warning=FALSE}
-# Convert class
-assembly_qc_checked$n50_contig_length <- as.numeric(unlist(assembly_qc_checked$n50_contig_length))
-
-ggplot(data = assembly_qc_checked) +
-  geom_point(mapping = aes(x = n50_contig_length, y = org_code_clean, color = ifelse(n50_contig_length_qc == "PASSED" , "#8ad879", "#f3533a"))) +
-  ylab("Organisms") +
-  xlab("N50 Value") +
-  scale_color_manual(values = c("#8ad879", "#f3533a"), labels = c("Passed", "Above threshold")) +
-  labs(color = "N50 Result") +
-  scale_x_continuous(
-  labels = scales::comma_format(big.mark = ',',
-                                 decimal.mark = '.'))
-
-
-```
-
-
-
-### Total Length
-
-```{r length_result ,echo=FALSE, message=FALSE, warning=FALSE}
-# Convert class
-assembly_qc_checked$total_contig <- as.numeric(unlist(assembly_qc_checked$total_contig))
-
-ggplot(data = assembly_qc_checked) +
-  geom_point(mapping = aes(x = total_contig, y = org_code_clean, color = ifelse(total_contig_qc == "PASSED" , "#8ad879", "#f3533a"))) +
-  ylab("Organisms") +
-  xlab("Total length Value") +
-  scale_color_manual(values = c("#8ad879", "#f3533a"), labels = c("Passed", "Above threshold")) +
-  labs(color = "Total length result") +
-  scale_x_continuous(
-  labels = scales::comma_format(big.mark = ',',
-                                 decimal.mark = '.'))
-
-
-```
-
-
-
-

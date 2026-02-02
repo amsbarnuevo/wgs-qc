@@ -189,6 +189,16 @@ arsrl_result_df1 <- arsrl_result_df
 
 
 if(nrow(wgs_result_df) != 0){
+  rmarkdown::render("wgs_qc_report_html.Rmd",
+                    output_file = paste("ARSRL_WGS_QC_report_",batch_code, '_html.html', sep='')
+  )
+}
+
+
+
+
+
+if(nrow(wgs_result_df) != 0){
   rmarkdown::render("wgs_qc_report_ver2.Rmd",
                     output_file = paste("ARSRL_WGS_QC_report_",batch_code, '.pdf', sep='')
   ) 
