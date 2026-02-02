@@ -232,31 +232,32 @@ qc_legend <- HTML(paste0(
 
 # --- Generate Interactive Table ---
 datatable(qc_listing_df,
-  escape = FALSE,
-  rownames = FALSE,
-  class = 'cell-border stripe',
-  caption = tags$caption(style = 'caption-side: bottom; text-align: left;', qc_legend),
-  options = list(
-    pageLength = 10,
-    scrollX = TRUE,
-    #dom = 'Bfrtip',
-    dom = 'lfrtip',
-    buttons = c('copy', 'csv', 'excel'),
-    # Header alignment
-    # --- Custom Header Styling ---
-    initComplete = JS(
-      "function(settings, json) {",
-      "$(this.api().table().header()).css({",
-      "  'background-color': '#D4D4D4',",
-      "  'color': 'black',",
-      "  'text-align': 'center'", # Centers the header text block
-      "});",
-      # This secondary selector ensures the specific header cells are centered
-      "$(this.api().table().header()).find('th').css('text-align', 'center');",
-      "}"
-    )
-  )
-) %>%
+          extensions = 'Buttons',
+          escape = FALSE,
+          rownames = FALSE,
+          class = 'cell-border stripe',
+          caption = tags$caption(style = 'caption-side: bottom; text-align: left;', qc_legend),
+          options = list(
+            pageLength = 10,
+            scrollX = TRUE,
+            dom = 'lBfrtip',
+            #dom = 'lfrtip',
+            buttons = c('copy', 'csv', 'excel', 'print'),
+            # Header alignment
+            # --- Custom Header Styling ---
+            initComplete = JS(
+              "function(settings, json) {",
+              "$(this.api().table().header()).css({",
+              "  'background-color': '#D4D4D4',",
+              "  'color': 'black',",
+              "  'text-align': 'center'", # Centers the header text block
+              "});",
+              # This secondary selector ensures the specific header cells are centered
+              "$(this.api().table().header()).find('th').css('text-align', 'center');",
+             "}"
+             )
+            )
+          ) %>%
   # Apply formatting to specific columns (analogous to column_spec)
   formatStyle(
     columns = c(4, 5), # Species columns
@@ -306,30 +307,30 @@ if (nrow(wgs_lowreads) != 0) {
 
   # --- Render Interactive Table ---
   datatable(lowreads_table,
-    container = sketch,        # Uses the custom header defined above
-    rownames = FALSE,
-    class = 'cell-border stripe',
-    options = list(
-      dom = 'Bfrtip',               # Only show the table (no search/pagination) as it's a summary
-      scrollX = TRUE,
-      columnDefs = list(
-        list(className = 'dt-center', targets = "_all"), # Center all body cells
-        list(width = '150px', targets = 0),              # Approx 3cm
-        list(width = '150px', targets = 1),              # Approx 3cm
-        list(width = '350px', targets = 2)               # Approx 7cm
-      ),
-      initComplete = JS(
-        "function(settings, json) {",
-        "$(this.api().table().header()).find('tr:eq(1) th').css({",
-        "  'background-color': '#D4D4D4',",
-        "  'color': 'black'",
-        "  'text-align': 'center'", # Centers the header text block
-        "});",
-        "}"
-      )
-    )
+            container = sketch,        # Uses the custom header defined above
+            rownames = FALSE,
+            class = 'cell-border stripe',
+            options = list(
+              dom = 'Bfrtip',               # Only show the table (no search/pagination) as it's a summary
+              scrollX = TRUE,
+              columnDefs = list(
+                list(className = 'dt-center', targets = "_all"), # Center all body cells
+                list(width = '150px', targets = 0),              # Approx 3cm
+                list(width = '150px', targets = 1),              # Approx 3cm
+                list(width = '350px', targets = 2)               # Approx 7cm
+              ),
+              initComplete = JS(
+                "function(settings, json) {",
+                "$(this.api().table().header()).find('tr:eq(1) th').css({",
+                "  'background-color': '#D4D4D4',",
+                "  'color': 'black'",
+                "  'text-align': 'center'", # Centers the header text block
+                "});",
+                "}"
+                )
+              )
   )
-}
+  }
 
 
 ```
@@ -454,31 +455,32 @@ legend_html <- HTML(paste0(
 
 # Render Datatable
 datatable(bactscout_df_merge,
-  extensions = 'Buttons',
-  escape = FALSE, # Allows the red cells from the loop to render
-  rownames = FALSE,
-  class = 'cell-border stripe',
-  caption = tags$caption(style = 'caption-side: bottom; text-align: left;', legend_html),
-  options = list(
-    pageLength = 15,
-    scrollX = TRUE,
-    #dom = 'Bfrtip',
-    dom = 'lfrtip',
-    buttons = c('copy', 'csv', 'excel'),
-    # --- Custom Header Styling ---
-    initComplete = JS(
-      "function(settings, json) {",
-      "$(this.api().table().header()).css({",
-      "  'background-color': '#D4D4D4',",
-      "  'color': 'black',",
-      "  'text-align': 'center'", # Centers the header text block
-      "});",
-      # This secondary selector ensures the specific header cells are centered
-      "$(this.api().table().header()).find('th').css('text-align', 'center');",
-      "}"
-    )
-  )
-) %>%
+          extensions = 'Buttons',
+          escape = FALSE, # Allows the red cells from the loop to render
+          rownames = FALSE,
+          class = 'cell-border stripe',
+          caption = tags$caption(style = 'caption-side: bottom; text-align: left;', legend_html),
+          options = list(
+            pageLength = 15,
+            scrollX = TRUE,
+            #dom = 'Bfrtip',
+            dom = 'lBfrtip',
+            #dom = 'lfrtip',
+            buttons = c('copy', 'csv', 'excel', 'print'),
+            # --- Custom Header Styling ---
+            initComplete = JS(
+              "function(settings, json) {",
+              "$(this.api().table().header()).css({",
+              "  'background-color': '#D4D4D4',",
+              "  'color': 'black',",
+              "  'text-align': 'center'", # Centers the header text block
+              "});",
+              # This secondary selector ensures the specific header cells are centered
+              "$(this.api().table().header()).find('th').css('text-align', 'center');",
+              "}"
+            )
+          )
+          ) %>%
   # --- 3. Apply Full Cell Background Colors Here ---
   formatStyle(
     'Final Status',
@@ -806,32 +808,34 @@ legend_html <- HTML(paste0(
 ))
 
 datatable(assembly_qc_value,
-  escape = FALSE, 
-  rownames = FALSE,
-  class = 'cell-border stripe',
-  caption = tags$caption(style = 'caption-side: bottom; text-align: left;', legend_html),
-  options = list(
-    dom = 'lBfrtip',
-    pageLength = 10,
-    lengthMenu = list(c(10, 25, 50, -1), c('10', '25', '50', 'All')),
-    scrollX = TRUE,
-    # --- Centering the Body Data ---
-    columnDefs = list(
-      list(className = 'dt-center', targets = "_all") # Forces center alignment for all body cells
-    ),
-    # --- Centering and Styling the Header ---
-    initComplete = JS(
-      "function(settings, json) {",
-      "$(this.api().table().header()).css({",
-      "  'background-color': '#D4D4D4',",
-      "  'color': 'black'",
-      "});",
-      # Specifically target the header 'th' elements for centering
-      "$(this.api().table().header()).find('th').css('text-align', 'center');",
-      "}"
-    )
-  )
-) %>%
+          extensions = 'Buttons',
+          escape = FALSE, 
+          rownames = FALSE,
+          class = 'cell-border stripe',
+          caption = tags$caption(style = 'caption-side: bottom; text-align: left;', legend_html),
+          options = list(
+            dom = 'lBfrtip',
+            buttons = c('copy', 'csv', 'excel', 'print'),
+            pageLength = 10,
+            lengthMenu = list(c(10, 25, 50, -1), c('10', '25', '50', 'All')),
+            scrollX = TRUE,
+            # --- Centering the Body Data ---
+            columnDefs = list(
+              list(className = 'dt-center', targets = "_all") # Forces center alignment for all body cells
+            ),
+            # --- Centering and Styling the Header ---
+            initComplete = JS(
+              "function(settings, json) {",
+              "$(this.api().table().header()).css({",
+              "  'background-color': '#D4D4D4',",
+              "  'color': 'black'",
+              "});",
+              # Specifically target the header 'th' elements for centering
+              "$(this.api().table().header()).find('th').css('text-align', 'center');",
+              "}"
+            )
+          )
+        ) %>%
   # --- 4. Apply Cell Background Colors ---
   formatStyle(
     c('Raw Reads Result', 'Assembly Result'), 
@@ -935,23 +939,25 @@ if (nrow(overall_reco) != 0) {
   colnames(overall_reco_df) <- c("Sample ID", "Raw Reads Result", "Assembly Result", "Final Result")
 
   datatable(overall_reco_df,
-    rownames = FALSE,
-    class = 'cell-border stripe',
-    options = list(
-      dom = 'lBfrtip',
-      scrollX = TRUE,
-      columnDefs = list(
-        list(className = 'dt-center', targets = "_all"),
-        list(targets = 0, textAlign = 'left', width = '400px') # Sample IDs left aligned
-      ),
-      initComplete = JS(
-        "function(settings, json) {",
-        "$(this.api().table().header()).css({'background-color': '#D4D4D4', 'color': 'black'});",
-        "$(this.api().table().header()).find('th').css('text-align', 'center');",
-        "}"
-      )
-    )
-  ) %>%
+            extensions = 'Buttons',
+            rownames = FALSE,
+            class = 'cell-border stripe',
+            options = list(
+             dom = 'lBfrtip',
+              buttons = c('copy', 'csv', 'excel', 'print'),
+              scrollX = TRUE,
+              columnDefs = list(
+                list(className = 'dt-center', targets = "_all"),
+                list(targets = 0, textAlign = 'left', width = '400px') # Sample IDs left aligned
+              ),
+              initComplete = JS(
+                "function(settings, json) {",
+                "$(this.api().table().header()).css({'background-color': '#D4D4D4', 'color': 'black'});",
+                "$(this.api().table().header()).find('th').css('text-align', 'center');",
+                "}"
+              )
+            )
+          ) %>%
     formatStyle(
       c('Raw Reads Result', 'Assembly Result', 'Final Result'),
       target = 'cell',
@@ -1103,7 +1109,7 @@ for(i in mlst_df_list) {
     caption = tags$caption(style = 'caption-side: bottom; text-align: left;', mlst_legend),
     options = list(
       dom = 'lBfrtip',
-      buttons = c('copy', 'csv', 'excel'),
+      buttons = c('copy', 'csv', 'excel', 'print'),
       pageLength = 10,
       scrollX = TRUE,
       columnDefs = list(
@@ -1224,7 +1230,7 @@ tbl_summary <- datatable(mlst_summary,
   caption = tags$caption(style = 'caption-side: bottom; text-align: left;', summary_legend),
   options = list(
     dom = 'lBfrtip',
-    buttons = c('copy', 'csv', 'excel'),
+    buttons = c('copy', 'csv', 'excel', 'print'),
     pageLength = 10,
     scrollX = TRUE,
     columnDefs = list(
@@ -1384,7 +1390,7 @@ for(i in amr_gene_df_list) {
     class = 'cell-border stripe',
     options = list(
       dom = 'lBfrtip',
-      buttons = c('copy', 'csv', 'excel'),
+      buttons = c('copy', 'csv', 'excel', 'print'),
       pageLength = 10,
       scrollX = TRUE, # Essential for tables with many gene columns
       columnDefs = list(
