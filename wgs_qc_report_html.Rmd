@@ -1373,7 +1373,7 @@ for(i in amr_gene_df_list) {
     thead(
       tr(
         th(colspan = ncol(df_subset), 
-           style = "text-align: left; font-style: italic; border-bottom: 1px solid #111;", 
+           style = "text-align: left; font-style: italic; font-size: 18px; border-bottom: 1px solid #111;", 
            species_val)
       ),
       tr(
@@ -1410,7 +1410,7 @@ for(i in amr_gene_df_list) {
   
   # Output the HTML table
   cat(as.character(htmltools::tagList(tbl)))
-  cat("\n\n\\vspace{5mm}\n\n")
+  cat("\n\n\\vspace{8mm}\n\n")
 }
 
 ```
