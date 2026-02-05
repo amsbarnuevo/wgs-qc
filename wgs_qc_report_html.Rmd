@@ -34,6 +34,7 @@ library(stringr)
 library(ggplot2)
 library(DT)
 library(htmltools)  # <-- needed for tags
+library(plotly)
 
 conflicts_prefer(openxlsx::write.xlsx)
 conflicts_prefer(dplyr::filter)
@@ -127,8 +128,7 @@ wgs_samplesheet <- wgs_samplesheet%>%
 \renewcommand{\arraystretch}{1.2}
 
 $\\$
-
-```{r qc-listing, echo = FALSE, warning = FALSE, message = FALSE}
+```{r wgs-data, echo = FALSE, warning = FALSE, message = FALSE}
 # --- Subset wgs_df ---
 wgs_id_df <- subset(wgs_df, select = c('sample_id','wgs_id'))
 
@@ -210,6 +210,85 @@ raw_read_failed <- df_bactscout_mod$name[df_bactscout_mod$a_final_status == "FAI
 # --- Get row numbers in qc_listing_df where sample_id matches any failed sample ---
 failure_color <- which(qc_listing_df$sample_id %in% raw_read_failed)
 
+
+
+```
+
+
+
+
+```{r sunburst-graph, echo = FALSE, warning = FALSE, message = FALSE, fig.height=7, fig.width=7}
+final_result_df <- df_bactscout_mod %>%
+  select(species, a_final_status) 
+
+sunburst_df <- final_result_df %>%
+  count(species, a_final_status, name = "value") %>%
+  mutate(
+    label = a_final_status,
+    parent = species
+  )
+
+# Add species as root nodes
+species_df <- sunburst_df %>%
+  group_by(species) %>%
+  summarise(value = sum(value), .groups = "drop") %>%
+  mutate(
+    label = species,
+    parent = ""
+  )
+
+sunburst_data <- bind_rows(
+  species_df %>% select(label, parent, value),
+  sunburst_df %>% select(label, parent, value)
+)
+
+
+sunburst_data <- sunburst_data %>%
+  mutate(
+    bold_label = paste0("<b>", label, "</b>"),
+    ids = ifelse(parent == "", label, paste(parent, "-", label)),
+    color = case_when(
+      label == "PASSED"  ~ "#006b54",
+      label == "FAILED"  ~ "#D2042D",
+      label == "WARNING" ~ "#ffd858",
+      TRUE               ~ "#aec7e8" # Default for bacteria
+    )
+  )
+
+
+# 3. Create the plot
+# 3. Create the plot with bold font settings
+fig <- plot_ly(
+  data = sunburst_data,
+  ids = ~ids,
+  labels = ~bold_label,
+  parents = ~parent,
+  values = ~value,
+  type = 'sunburst',
+  branchvalues = 'total',
+  marker = list(colors = ~color),
+  # Explicitly setting font to bold
+  insidetextfont = list(size = 15),
+  outsidetextfont = list(size = 15),
+  hovertemplate = "<b>%{label}</b><br>Value: %{value}<extra></extra>"
+)
+
+fig <- fig %>% plotly::layout(
+  margin = list(l = 0, r = 0, b = 0, t = 40)
+)
+
+fig
+
+
+```
+
+
+***Figure 1. *** **Distribution and quality control results of sequenced isolates.**
+$\\$ $\\$
+
+***Table 1.*** **Concordance analysis of bacterial identification of sequenced isolates.**
+
+```{r qc-listing, echo = FALSE, warning = FALSE, message = FALSE}
 
 # --- Clean up ---
 qc_listing_df <- qc_listing_df %>%
@@ -297,7 +376,7 @@ if (nrow(wgs_lowreads) != 0) {
     class = 'display',
     thead(
       tr(
-        th(colspan = 3, style = "text-align: left; border-bottom: 1px solid #111;", "Sample excluded in the analysis")
+        th(colspan = 3, style = "border-bottom: 1px solid #111;", "Sample excluded in the analysis")
       ),
       tr(
         lapply(colnames(lowreads_table), th, style = "text-align: center;")
@@ -341,6 +420,10 @@ $\\$
 
 ### **RAW READS QC**
 
+$\\$
+
+
+***Table 2.*** **Summary of raw reads quality control analysis.**
 
 ```{r bactscout-df-value, echo = FALSE, warning = FALSE, message = FALSE}
 # --- Create new column to check final status with warning status and list column indices with failed results ---
@@ -522,9 +605,26 @@ if(length(no_bactscout_result) != 0){
   
   colnames(df_no_bactscout) <- c('Sample ID', 'Remarks')
   
+  # --- Create Custom Header (equivalent to add_header_above) ---
+  sketch <- htmltools::withTags(table(
+    class = 'display',
+    thead(
+      tr(
+        th(colspan = ncol(df_no_bactscout), 
+           style = "font-style: bold; font-size: 16px; color: black;", 
+           "Summary of No Raw Reads Data")
+        ),
+      tr(
+        lapply(colnames(df_no_bactscout), th, style = "text-align: center;")
+        )
+      )
+  ))
+  
+  
   # Render Interactive Table
   datatable(df_no_bactscout,
     #extensions = 'Buttons',
+    container = sketch,
     rownames = FALSE,
     class = 'cell-border stripe',
     options = list(
@@ -534,7 +634,7 @@ if(length(no_bactscout_result) != 0){
       pageLength = 10,
       scrollX = TRUE, # Important for long comma-separated lists
       columnDefs = list(
-        list(targets = 0, className = 'dt-left'),  # Sample IDs left aligned
+        list(targets = 0, className = 'dt-center'),  # Sample IDs left aligned
         list(targets = 1, className = 'dt-center') # Remarks center aligned
       ),
       initComplete = JS(
@@ -549,8 +649,6 @@ if(length(no_bactscout_result) != 0){
 
 ```
 
-
-$\color{red}{\normalsize\textbf{SUMMARY OF RESULT:}}$
 
 
 ```{r summary-table ,echo=FALSE, message=FALSE, warning=FALSE}
@@ -579,31 +677,47 @@ summary_raw_df <- bind_rows(
     .groups = "drop"
   )
 
+colnames(summary_raw_df) <- c('Sample ID','Reason - Failed Metrics')
+
+# --- Create Custom Header (equivalent to add_header_above) ---
+sketch <- htmltools::withTags(table(
+  class = 'display',
+  thead(
+    tr(
+      th(colspan = ncol(summary_raw_df), 
+         style = "font-style: bold; font-size: 16px; color: black;", 
+         "Summary of Raw Reads with FAILED QC results")
+      ),
+    tr(
+      lapply(colnames(summary_raw_df), th, style = "text-align: center;")
+      )
+    )
+))
+
 
 
 if (nrow(summary_raw_df) != 0) {
-  colnames(summary_raw_df) <- c('Sample ID','Reason - Failed Metrics')
-  
   # Render Interactive Table
   datatable(summary_raw_df,
-    rownames = FALSE,
-    class = 'cell-border stripe',
-    options = list(
-      dom = 't', # Buttons, Length, filter, processing, table, info, pagination
-      lengthMenu = list(c(5, 10, 25, -1), c('5', '10', '25', 'All')),
-      pageLength = 10,
-      scrollX = TRUE, # Important for long comma-separated lists
-      columnDefs = list(
-        list(targets = 0, className = 'dt-left'),  # Sample IDs left aligned
-        list(targets = 1, className = 'dt-center') # Remarks center aligned
-      ),
-      initComplete = JS(
-        "function(settings, json) {",
-        "$(this.api().table().header()).css({'background-color': '#D4D4D4', 'color': 'black'});",
-        "$(this.api().table().header()).find('th').css('text-align', 'center');",
-        "}"
-      )
-    )
+            container = sketch,
+            rownames = FALSE,
+            class = 'cell-border stripe',
+            options = list(
+              dom = 't', # Buttons, Length, filter, processing, table, info, pagination
+              lengthMenu = list(c(5, 10, 25, -1), c('5', '10', '25', 'All')),
+              pageLength = 10,
+              scrollX = TRUE, # Important for long comma-separated lists
+              columnDefs = list(
+                list(targets = 0, className = 'dt-center'), 
+                list(targets = 1, className = 'dt-center') # center aligned
+              ),
+              initComplete = JS(
+                "function(settings, json) {",
+                "$(this.api().table().header()).css({'background-color': '#D4D4D4', 'color': 'black'});",
+                "$(this.api().table().header()).find('th').css('text-align', 'center');",
+                "}"
+              )
+            )
   )
   
   
@@ -621,6 +735,9 @@ $\\$
 
 ### **ASSEMBLY QC**
 
+$\\$
+
+***Table 3.*** **Summary of assembly reads quality control analysis.**
 
 ```{r assembly-qc, echo = FALSE, warning = FALSE, message = FALSE}
 assembly_qc <- merge(wgs_df, arsrl_id_df, by = "sample_id")
@@ -860,9 +977,6 @@ datatable(assembly_qc_value,
 
 
 
-$\color{red}{\normalsize\textbf{SUMMARY OF RESULT:}}$
-
-
 ```{r assembly-summary-table ,echo=FALSE, message=FALSE, warning=FALSE}
 assembly_failed <- assembly_qc_checked %>% filter(!is.na(failed_conditions))
 
@@ -880,29 +994,46 @@ if (nrow(assembly_failed) !=0) {
 
 
 colnames(assembly_reco_df) <- c('Sample ID','Reason - Failed Metrics')
+
+# --- Create Custom Header (equivalent to add_header_above) ---
+sketch <- htmltools::withTags(table(
+  class = 'display',
+  thead(
+    tr(
+      th(colspan = ncol(assembly_reco_df), 
+         style = "font-style: bold; font-size: 16px; color: black;", 
+         "Summary of Assembly Reads with FAILED QC results")
+      ),
+    tr(
+      lapply(colnames(assembly_reco_df), th, style = "text-align: center;")
+      )
+    )
+))
+
   
 # Render Interactive Table
 datatable(assembly_reco_df,
-  #extensions = 'Buttons',
-  rownames = FALSE,
-  class = 'cell-border stripe',
-  options = list(
-    dom = 't', # Buttons, Length, filter, processing, table, info, pagination
-    buttons = c('copy', 'csv', 'excel'),
-    lengthMenu = list(c(5, 10, 25, -1), c('5', '10', '25', 'All')),
-    pageLength = 10,
-    scrollX = TRUE, # Important for long comma-separated lists
-    columnDefs = list(
-      list(targets = 0, className = 'dt-left'),  # Sample IDs left aligned
-      list(targets = 1, className = 'dt-center') # Remarks center aligned
-    ),
-    initComplete = JS(
-      "function(settings, json) {",
-      "$(this.api().table().header()).css({'background-color': '#D4D4D4', 'color': 'black'});",
-      "$(this.api().table().header()).find('th').css('text-align', 'center');",
-      "}"
-    )
-  )
+          container = sketch,
+          #extensions = 'Buttons',
+          rownames = FALSE,
+          class = 'cell-border stripe',
+          options = list(
+            dom = 't', # Buttons, Length, filter, processing, table, info, pagination
+            buttons = c('copy', 'csv', 'excel'),
+            lengthMenu = list(c(5, 10, 25, -1), c('5', '10', '25', 'All')),
+            pageLength = 10,
+            scrollX = TRUE, # Important for long comma-separated lists
+            columnDefs = list(
+              list(targets = 0, className = 'dt-center'), 
+              list(targets = 1, className = 'dt-center') # center aligned
+            ),
+            initComplete = JS(
+              "function(settings, json) {",
+              "$(this.api().table().header()).css({'background-color': '#D4D4D4', 'color': 'black'});",
+              "$(this.api().table().header()).find('th').css('text-align', 'center');",
+              "}"
+            )
+          )
 )
 
 
@@ -911,7 +1042,7 @@ datatable(assembly_reco_df,
 
 $\\$ $\\$ $\\$
 
-### **RESULTS RECOMMENDATION**
+### **Final Recommendation based on QC results**
 
 ```{r overall-recommendation-table ,echo=FALSE, message=FALSE, warning=FALSE}
 # --- Process Data (Logic remains the same) ---
@@ -1001,9 +1132,6 @@ if (nrow(overall_reco) != 0) {
 
 $\\$ $\\$ $\\$
 
-### MLST RESULTS
-
-
 ```{r mlst_df ,echo=FALSE, message=FALSE, warning=FALSE}
 #rename columns
 mlst_df_clean <- df_mlst %>%
@@ -1042,6 +1170,24 @@ mlst_df_clean$species <- ifelse(mlst_df_clean$wgs_id == 'Salmonella enterica', '
 
 #list unique species in the dataframe
 species_list <- unique(mlst_df_clean$species)
+
+#list unique wgs_id in the dataframe
+mlst_organism_list <- unique(mlst_df_clean$wgs_id)
+
+# -- add letter --
+mlst_organism_list <- paste0(
+  letters[seq_along(mlst_organism_list)],
+  ") ",
+  mlst_organism_list
+)
+
+
+# -- Add "and" before the last item --
+n <- length(mlst_organism_list)
+
+mlst_organism_list[n] <- paste("and", mlst_organism_list[n])
+
+
 
 mlst_df_list = c()
 
@@ -1084,6 +1230,9 @@ for(i in species_list) {
 ```
 
 
+### **MLST RESULTS**
+
+***Table 4.*** **Summary of Multilocus Sequence Typing (MLST) results of** ***`r paste(mlst_organism_list, collapse = ", ")`***
 
 ```{r mlst_table, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 # List existing sample_id in the mlst table
@@ -1096,6 +1245,7 @@ for(i in mlst_df_list) {
   # Data cleanup
   df <- subset(df, select = -c(species))
   names(df)[names(df) == 'wgs_id'] <- 'species'
+  names(df)[names(df) == 'sample_id'] <- 'Sample ID'
   
   # Define Legend
   mlst_legend <- HTML('<strong>Legend: </strong> <span style="font-style: italic;">(-) Not identified</span>')
@@ -1114,7 +1264,6 @@ for(i in mlst_df_list) {
       scrollX = TRUE,
       columnDefs = list(
         list(className = 'dt-center', targets = "_all"),
-        list(targets = 1, fontStyle = 'italic'), # Italicize Species
         list(width = '150px', targets = 0),      # Width for Sample ID
         list(width = '150px', targets = 1)       # Width for Species
       ),
@@ -1125,7 +1274,12 @@ for(i in mlst_df_list) {
         "}"
       )
     )
+  ) %>%
+    formatStyle(
+    columns = 2, # Species columns
+    fontStyle = 'italic'
   )
+    
   
   # In a loop with results='asis', we must print the HTML tag
   cat(as.character(htmltools::tagList(tbl)))
@@ -1150,8 +1304,25 @@ if (length(no_mlst) != 0) {
   df_no_mlst <- data.frame(sample_id_clean, wgs_id, species)
   colnames(df_no_mlst) <- c('Sample ID', 'WGS ID', 'Species/Remarks')
   
+  # --- Create Custom Header (equivalent to add_header_above) ---
+  sketch <- htmltools::withTags(table(
+    class = 'display',
+    thead(
+      tr(
+        th(colspan = ncol(df_no_mlst), 
+           style = "font-style: bold; font-size: 16px; color: black;", 
+           "Summary of Sample with No MLST Result")
+        ),
+      tr(
+        lapply(colnames(df_no_mlst), th, style = "text-align: center;")
+        )
+      )
+  ))
+  
+  
   # Render Interactive Table
   tbl_no_mlst <- datatable(df_no_mlst,
+    container = sketch,                      
     extensions = 'Buttons',
     rownames = FALSE,
     class = 'cell-border stripe',
@@ -1182,10 +1353,6 @@ if (length(no_mlst) != 0) {
 
 ### MLST RESULTS SUMMARY:
 ```{r mlst_summary, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
-library(dplyr)
-library(DT)
-library(htmltools)
-
 mlst_summary <- data.frame(Species=character(), 
                            MLST=character(), 
                            stringsAsFactors=FALSE) 
@@ -1235,11 +1402,9 @@ tbl_summary <- datatable(mlst_summary,
     scrollX = TRUE,
     columnDefs = list(
       # Center alignment for the whole table or specific columns
+      list(className = 'dt-center', targets = 0), 
       list(className = 'dt-center', targets = 1), 
       # Left alignment for Species for better readability
-      list(className = 'dt-left', targets = 0),
-      # Italicize Species column
-      list(targets = 0, fontStyle = 'italic'),
       # Set width for the MLST summary column to handle long strings
       list(width = '600px', targets = 1)
     ),
@@ -1250,19 +1415,17 @@ tbl_summary <- datatable(mlst_summary,
       "}"
     )
   )
-)
+) %>%
+    formatStyle(
+    columns = 1, # Species columns
+    fontStyle = 'italic'
+  )
 
 # Render the table
 cat(as.character(htmltools::tagList(tbl_summary)))
 
 ```
 
-
-
-
-$\\$ $\\$ $\\$
-
-### AMR PREDICTION RESULTS
 
 
 ```{r amr_genes ,echo=FALSE, message=FALSE, warning=FALSE}
@@ -1294,7 +1457,25 @@ df_amrfinderplus1 <- df_amrfinderplus1[grepl(batch_name_clean, df_amrfinderplus1
 #remove batch name in sample_id
 df_amrfinderplus1$sample_id <- sub("(.*)_[^_]*$", "\\1", df_amrfinderplus1$sample_id)
 
+#list unique wgs_id in the dataframe
 amr_genes_species <- unique(df_amrfinderplus1$wgs_id)
+
+# -- add letter --
+amr_genes_list <- paste0(
+  letters[seq_along(amr_genes_species)],
+  ") ",
+  amr_genes_species
+)
+
+
+# -- Add "and" before the last item --
+n <- length(amr_genes_list)
+
+amr_genes_list[n] <- paste("and", amr_genes_list[n])
+
+
+
+
 
 #vector to hold list of amr gene datables
 amr_gene_df_list = c()
@@ -1340,8 +1521,18 @@ for(i in amr_genes_species) {
 ```
 
 
+
+$\\$ $\\$ $\\$
+
+
+### **AMR PREDICTION RESULTS**
+
+***Table 5.*** **Summary of AMR genes present among of** ***`r paste(amr_genes_list, collapse = ", ")`***
+
+
 ```{r amr_gene_tables, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
-for(i in amr_gene_df_list) {
+for (idx in seq_along(amr_gene_df_list)) {
+  i <- amr_gene_df_list[idx]
   df_orig <- get(i)
   
   wgs_species_1 <- wgs_species
@@ -1354,15 +1545,24 @@ for(i in amr_gene_df_list) {
   
   # Change wgs_id to species
   names(df)[names(df) == 'wgs_id'] <- 'species'
+  names(df)[names(df) == 'sample_id'] <- 'Sample ID'
   
   # Reorder column
-  df <- df %>% relocate(species, .after = sample_id)
+  df <- df %>% relocate(species, .after = `Sample ID`)
   
   # Remove columns with all NA values
   df <- df[, colSums(is.na(df)) < nrow(df)]
   
   # Get unique species value for the header
   species_val <- unique(df$species)[1]
+  
+  # -- add letter --
+  species_val <- paste0(
+    letters[idx],
+    ") ",
+    species_val
+  )
+  
   
   # Subset dataframe to retain needed columns (removing species column as it goes in header)
   df_subset <- subset(df, select = -c(species))
@@ -1373,7 +1573,7 @@ for(i in amr_gene_df_list) {
     thead(
       tr(
         th(colspan = ncol(df_subset), 
-           style = "text-align: left; font-style: italic; font-size: 18px; border-bottom: 1px solid #111;", 
+           style = "font-style: italic; font-size: 16px; border-bottom: 1px solid #111;", 
            species_val)
       ),
       tr(

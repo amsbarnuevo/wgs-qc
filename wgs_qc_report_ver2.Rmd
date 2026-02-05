@@ -57,6 +57,7 @@ library(writexl)
 library(conflicted)
 library(stringr)
 library(ggplot2)
+library(plotly)
 
 conflicts_prefer(openxlsx::write.xlsx)
 conflicts_prefer(dplyr::filter)
@@ -147,9 +148,7 @@ wgs_samplesheet <- wgs_samplesheet%>%
 \selectfont
 \captionsetup[table]{labelformat=empty}
 \renewcommand{\arraystretch}{1.2}
-
-
-```{r qc-listing, echo = FALSE, warning = FALSE, message = FALSE}
+```{r wgs-data, echo = FALSE, warning = FALSE, message = FALSE}
 # --- Subset wgs_df ---
 wgs_id_df <- subset(wgs_df, select = c('sample_id','wgs_id'))
 
@@ -223,7 +222,88 @@ df_bactscout_mod <- df_bactscout %>%
   filter(name %in% sample_name)
 
 
+```
 
+
+```{r sunburst-graph, echo = FALSE, warning = FALSE, message = FALSE, fig.height=10, fig.width=9}
+final_result_df <- df_bactscout_mod %>%
+  select(species, a_final_status) 
+
+sunburst_df <- final_result_df %>%
+  count(species, a_final_status, name = "value") %>%
+  mutate(
+    label = a_final_status,
+    parent = species
+  )
+
+# Add species as root nodes
+species_df <- sunburst_df %>%
+  group_by(species) %>%
+  summarise(value = sum(value), .groups = "drop") %>%
+  mutate(
+    label = species,
+    parent = ""
+  )
+
+sunburst_data <- bind_rows(
+  species_df %>% select(label, parent, value),
+  sunburst_df %>% select(label, parent, value)
+)
+
+
+sunburst_data <- sunburst_data %>%
+  mutate(
+    bold_label = paste0("<b>", label, "</b>"),
+    ids = ifelse(parent == "", label, paste(parent, "-", label)),
+    color = case_when(
+      label == "PASSED"  ~ "#006b54",
+      label == "FAILED"  ~ "#D2042D",
+      label == "WARNING" ~ "#ffd858",
+      TRUE               ~ "#aec7e8" # Default for bacteria
+    )
+  )
+
+
+# 3. Create the plot
+# 3. Create the plot with bold font settings
+fig <- plot_ly(
+  data = sunburst_data,
+  ids = ~ids,
+  labels = ~bold_label,
+  parents = ~parent,
+  values = ~value,
+  type = 'sunburst',
+  branchvalues = 'total',
+  marker = list(colors = ~color),
+  # Explicitly setting font to bold
+  insidetextfont = list(size = 15),
+  outsidetextfont = list(size = 15),
+  hovertemplate = "<b>%{label}</b><br>Value: %{value}<extra></extra>"
+)
+
+fig <- fig %>% plotly::layout(
+  title = list(
+    text = "<b><i>Figure 1.</i></b> <b>Distribution and quality control results of sequenced isolates.</b>",
+    font = list(size = 12),
+    y = 0.05,       # Lift it slightly off the absolute edge
+    x = 0.5,
+    xanchor = 'center',
+    yanchor = 'bottom' # Anchor the bottom of the text
+  ),
+  # Increase 'b' (bottom) margin to at least 50-80 to fit the text
+  margin = list(l = 0, r = 0, b = 80, t = 40) 
+)
+
+fig
+
+
+
+```
+
+
+\small\textbf{\emph{Table 1.} Concordance analysis of bacterial identification of sequenced isolates.}
+
+```{r qc-listing, echo = FALSE, warning = FALSE, message = FALSE}
 # --- Identify failed WGS sample names ---
 raw_read_failed <- df_bactscout_mod$name[df_bactscout_mod$a_final_status == "FAILED"]
 
@@ -298,11 +378,14 @@ if (nrow(wgs_lowreads != 0)){
 $\\$
 \newpage
 \begin{landscape}
-\Large RAW READS - QC
 \fontsize{7}{8}
 \selectfont
 \captionsetup[table]{labelformat=empty}
 \renewcommand{\arraystretch}{1.2}
+\section*{RAW READS QC}
+
+\small\textbf{\emph{Table 2.} Summary of raw reads quality control analysis.}
+
 
 
 ```{r bactscout-df-value, echo = FALSE, warning = FALSE, message = FALSE}
@@ -469,7 +552,8 @@ if(length(no_bactscout_result) != 0){
     ) %>%
     column_spec(1, width = "20cm") %>%
     column_spec(2, width = "5cm") %>%
-    row_spec(0, background = "#D4D4D4", bold = TRUE)
+    row_spec(0, background = "#D4D4D4", bold = TRUE) %>%
+    add_header_above(c("Summary of No Raw Reads Data" = 2), align = "l", bold = TRUE)
   
     no_bactscout_table  
   
@@ -482,7 +566,7 @@ if(length(no_bactscout_result) != 0){
 
 
 
-$\\$ $\\$ $\\$ $\color{red}{\normalsize\textbf{SUMMARY OF RESULT:}}$
+$\\$ 
 
 
 ```{r recommendation-table ,echo=FALSE, message=FALSE, warning=FALSE}
@@ -529,7 +613,8 @@ reco_table <- reco_df %>%
   ) %>%
   column_spec(1, width = "6cm") %>%
   column_spec(2, width = "6cm") %>%
-  row_spec(0, background = "#D4D4D4", bold = TRUE)
+  row_spec(0, background = "#D4D4D4", bold = TRUE) %>%
+  add_header_above(c("Summary of Raw Reads with FAILED QC results" = 2), align = "l", bold = TRUE)
 
   reco_table  
 
@@ -543,11 +628,15 @@ reco_table <- reco_df %>%
 
 
 \begin{landscape}
-\Large ASSEMBLY - QC
 \fontsize{7}{8}
 \selectfont
 \captionsetup[table]{labelformat=empty}
 \renewcommand{\arraystretch}{1.2}
+\section*{ASSEMBLY QC}
+
+\small\textbf{\emph{Table 3.} Summary of assembly reads quality control analysis.}
+
+
 
 ```{r assembly-qc, echo = FALSE, warning = FALSE, message = FALSE}
 assembly_qc <- merge(wgs_df, arsrl_id_df, by = "sample_id")
@@ -777,9 +866,6 @@ assembly_qc_value %>%
 ```
 
 
-$\\$ $\\$ $\\$ $\color{red}{\normalsize\textbf{SUMMARY OF RESULTS:}}$
-
-
 ```{r assembly-recommendation-table ,echo=FALSE, message=FALSE, warning=FALSE}
 assembly_failed <- assembly_qc_checked %>% filter(!is.na(failed_conditions))
 
@@ -810,15 +896,17 @@ assembly_reco_table <- assembly_reco_df %>%
   ) %>%
   column_spec(1, width = "6cm") %>%
   column_spec(2, width = "6cm") %>%
-  row_spec(0, background = "#D4D4D4", bold = TRUE)
+  row_spec(0, background = "#D4D4D4", bold = TRUE) %>%
+  add_header_above(c("Summary of Assembly Reads with FAILED QC results" = 2), align = "l", bold = TRUE)
 
   assembly_reco_table  
 
 
 ```
 
+\section*{Final Recommendation based on QC results}
 
-$\\$ $\\$ $\\$ $\color{red}{\normalsize\textbf{RECOMMENDATION:}}$
+
 
 ```{r overall-recommendation-table ,echo=FALSE, message=FALSE, warning=FALSE}
 overall_reco <- assembly_qc_checked %>% 
@@ -937,6 +1025,22 @@ mlst_df_clean$species <- ifelse(mlst_df_clean$wgs_id == 'Salmonella enterica', '
 #list unique species in the dataframe
 species_list <- unique(mlst_df_clean$species)
 
+#list unique wgs_id in the dataframe
+mlst_organism_list <- unique(mlst_df_clean$wgs_id)
+
+# -- add letter --
+mlst_organism_list <- paste0(
+  letters[seq_along(mlst_organism_list)],
+  ") ",
+  mlst_organism_list
+)
+
+
+# -- Add "and" before the last item --
+n <- length(mlst_organism_list)
+
+mlst_organism_list[n] <- paste("and", mlst_organism_list[n])
+
 mlst_df_list = c()
 
 #create multiple dataframe for each species
@@ -983,9 +1087,10 @@ for(i in species_list) {
 \selectfont
 \captionsetup[table]{labelformat=empty}
 \renewcommand{\arraystretch}{1}
+\section*{MLST RESULTS}
 
+\small\textbf{\emph{Table 4.} Summary of Multilocus Sequence Typing (MLST) results of \emph{`r paste(mlst_organism_list, collapse = ", ")`}}
 
-### MLST RESULTS
 
 ```{r mlst_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 #list existing sample_id in the mlst table
@@ -997,6 +1102,7 @@ for(i in mlst_df_list) {
   
   df <- subset(df, select = -c(species) )
   names(df)[names(df) == 'wgs_id'] <- 'species'
+  names(df)[names(df) == 'sample_id'] <- 'Sample ID'
   
   col_num <- ncol(df)
   
@@ -1040,7 +1146,8 @@ if (length(no_mlst) !=0){
   
   no_mlst_table <- kable(df,align = "c", row.names = FALSE) %>%
     kable_styling(position = "left") %>%
-    row_spec(0, background = "#D4D4D4",bold = TRUE)
+    row_spec(0, background = "#D4D4D4",bold = TRUE) %>%
+    add_header_above(c("Summary of Sample with No MLST Result" = 3), align = "l", bold = TRUE)
    
 
 
@@ -1054,8 +1161,8 @@ if (length(no_mlst) !=0){
 
 
 
+\section*{MLST RESULTS SUMMARY}
 
-### MLST RESULTS SUMMARY:
 
 ```{r mlst_summary ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 mlst_summary <- data.frame(Species=character(), 
@@ -1117,7 +1224,7 @@ for(i in mlst_df_list) {
 \renewcommand{\arraystretch}{1.2}
 
 
-\normalsize\textbf{AMR PREDICTION RESULTS}\textbf\normalsize
+
 
 ```{r amr_genes ,echo=FALSE, message=FALSE, warning=FALSE}
 df_amrfinderplus1 <- df_amrfinderplus
@@ -1149,6 +1256,19 @@ df_amrfinderplus1 <- df_amrfinderplus1[grepl(batch_name_clean, df_amrfinderplus1
 df_amrfinderplus1$sample_id <- sub("(.*)_[^_]*$", "\\1", df_amrfinderplus1$sample_id)
 
 amr_genes_species <- unique(df_amrfinderplus1$wgs_id)
+
+# -- add letter --
+amr_genes_list <- paste0(
+  letters[seq_along(amr_genes_species)],
+  ") ",
+  amr_genes_species
+)
+
+
+# -- Add "and" before the last item --
+n <- length(amr_genes_list)
+
+amr_genes_list[n] <- paste("and", amr_genes_list[n])
 
 #vector to hold list of amr gene datables
 amr_gene_df_list = c()
@@ -1198,9 +1318,15 @@ for(i in amr_genes_species) {
 \selectfont
 \captionsetup[table]{labelformat=empty}
 \renewcommand{\arraystretch}{1.2}
+\section*{AMR PREDICTION RESULTS}
+
+
+\small\textbf{\emph{Table 5.} Summary of AMR genes present among of \emph{`r paste(amr_genes_list, collapse = ", ")`}}
+
 
 ```{r amr_genes_table ,echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
-for(i in amr_gene_df_list) {
+for (idx in seq_along(amr_gene_df_list)) {
+  i <- amr_gene_df_list[idx]
   df <- get(i)
   
   wgs_species_1 <- wgs_species
@@ -1213,10 +1339,10 @@ for(i in amr_gene_df_list) {
   
   # Change wgs_id to species
   names(df)[names(df) == 'wgs_id'] <- 'species'
+  names(df)[names(df) == 'sample_id'] <- 'Sample ID'
   
   # Reorder column
-  df <- df %>%
-    relocate(species, .after = sample_id)
+  df <- df %>% relocate(species, .after = `Sample ID`)
   
   # Remove columns with all NA values
   df <- df[, colSums(is.na(df)) < nrow(df)]
@@ -1226,6 +1352,13 @@ for(i in amr_gene_df_list) {
   species_caption <- paste("\\\\textit{", species, "}", sep = "")
   species_caption <- species_caption[1]
   
+  # -- add letter --
+  species_caption <- paste0(
+    letters[idx],
+    ") ",
+    species_caption
+  )
+  
   # Subset dataframe to retain needed columns only
   df <- subset(df, select = -c(species))
   
@@ -1234,7 +1367,7 @@ for(i in amr_gene_df_list) {
   max_cols_per_table <- 6  # Maximum columns per table (excluding sample_id)
   
   # Get the column names (excluding sample_id)
-  all_cols <- setdiff(colnames(df), "sample_id")
+  all_cols <- setdiff(colnames(df), "Sample ID")
   
   # Calculate number of column groups needed
   num_col_groups <- ceiling(length(all_cols) / max_cols_per_table)
@@ -1253,7 +1386,7 @@ for(i in amr_gene_df_list) {
       # Determine column indices for this group
       start_col <- (col_group-1) * max_cols_per_table + 1
       end_col <- min(col_group * max_cols_per_table, length(all_cols))
-      cols_to_keep <- c("sample_id", all_cols[start_col:end_col])
+      cols_to_keep <- c("Sample ID", all_cols[start_col:end_col])
       
       df_subset <- df_row_subset[, cols_to_keep, drop = FALSE]
       
