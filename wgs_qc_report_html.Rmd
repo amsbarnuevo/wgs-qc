@@ -428,8 +428,9 @@ $\\$
 ```{r bactscout-df-value, echo = FALSE, warning = FALSE, message = FALSE}
 # --- Create new column to check final status with warning status and list column indices with failed results ---
 bactscout_df_result <- df_bactscout_mod %>%
-  select(name, species,contamination = contamination_message,`Coverage (Qualibact)` = coverage_estimate_qualibact_status, `Duplication Rate` = duplication_status, 
-        `GC Content` = gc_content_status, `MLST (ST)` = mlst_status, `Read Length` = read_length_status, `Read Q30` = read_q30_status, a_final_status)
+  select(name, species, Contamination = contamination_message,`Coverage (Qualibact)` = coverage_estimate_qualibact_status, `Duplication Rate` = duplication_status, 
+        `GC Content` = gc_content_status, `MLST (ST)` = mlst_status, `Read Length` = read_length_status, `Read Q30` = read_q30_status, a_final_status) %>%
+  mutate(Contamination = ifelse(Contamination == "OK", "PASSED", "FAILED"))
 
 bactscout_df_result$failed_idx <- apply(bactscout_df_result, 1, function(row) {
   if (row["a_final_status"] == "FAILED") {
@@ -982,7 +983,6 @@ assembly_failed <- assembly_qc_checked %>% filter(!is.na(failed_conditions))
 
 if (nrow(assembly_failed) !=0) {
   assembly_reco_df <- assembly_failed %>% select(sample_id, failed_conditions) %>%
-    mutate(failed_conditions = paste(unique(failed_conditions), collapse = ", ")) %>%
     mutate(sample_id = sub("(.*)_[^_]*$", "\\1", sample_id))
 } else {
   sample_id <- ""
@@ -1093,8 +1093,8 @@ if (nrow(overall_reco) != 0) {
       c('Raw Reads Result', 'Assembly Result', 'Final Result'),
       target = 'cell',
       backgroundColor = styleEqual(
-        c('PASSED', 'FAILED'), 
-        c('#006b54', '#D2042D')
+         c('PASSED', 'WARNING', 'FAILED'), 
+        c('#006b54', '#ffd858', '#D2042D')
       ),
       color = styleEqual(
         c('PASSED', 'FAILED'), 
