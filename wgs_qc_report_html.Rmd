@@ -1140,10 +1140,33 @@ mlst_df_clean <- df_mlst %>%
          "MLST" = 3
          ) %>%
   mutate(
-    sample_id = sub(".*/(.*)\\.fna$", "\\1", sample_id),
+    sample_id = sub(".fna$", "\\1", sample_id),
     sample_id = gsub("-", "_", sample_id)
     ) %>%
   filter(str_detect(sample_id, batch_name_clean))
+
+
+
+
+# Split the string in each row by a semicolon
+split_list <- strsplit(mlst_df_clean$ALLELES, split = ";")
+
+# Determine the maximum number of values across all rows
+max_cols <- max(sapply(split_list, length))
+
+# Pad shorter lists with NA to make them all the same length
+split_list_padded <- lapply(split_list, function(x) {
+  length(x) <- max_cols
+  return(x)
+})
+
+# Convert the list to a matrix and then to a data frame, assigning names
+new_cols_df <- as.data.frame(do.call(rbind, split_list_padded))
+colnames(new_cols_df) <- paste0("allele", 1:max_cols)
+
+# Combine with the original data frame
+mlst_df_clean <- cbind(mlst_df_clean, new_cols_df)
+
 
 
 #drop row without species
@@ -1158,7 +1181,8 @@ mlst_df_clean$sample_id <- sub("(.*)_[^_]*$", "\\1", mlst_df_clean$sample_id)
 
 #reorder column
 mlst_df_clean <- mlst_df_clean %>% 
-  relocate(wgs_id, .after = species)
+  relocate(wgs_id, .after = species) %>%
+  select(-ALLELES)
 
 #identify salmonella enterica group
 mlst_df_clean$species <- ifelse(mlst_df_clean$wgs_id == 'Salmonella enterica', 'salmonella_enterica', ifelse(mlst_df_clean$wgs_id == 'Salmonella typhoidal','salmonella_typhoidal', mlst_df_clean$species))
@@ -1187,17 +1211,16 @@ n <- length(mlst_organism_list)
 
 mlst_organism_list[n] <- paste("and", mlst_organism_list[n])
 
-
-
 mlst_df_list = c()
+
 
 #create multiple dataframe for each species
 for(i in species_list) {
   #retain first four columns
-  mlst_info_df <- subset(mlst_df_clean, select = 1:4)
+  mlst_info_df <- subset(mlst_df_clean, select = 1:6)
   
   #remove demogs column
-  mlst_result_df <- subset(mlst_df_clean, , select = -c(1, 2, 3,4))
+  mlst_result_df <- subset(mlst_df_clean, , select = -c(1:6))
 
 
   #use first row data as column names in r
@@ -1228,6 +1251,7 @@ for(i in species_list) {
 
 
 ```
+
 
 
 ### **MLST RESULTS**

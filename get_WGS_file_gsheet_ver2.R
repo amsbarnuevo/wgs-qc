@@ -40,7 +40,8 @@ df_bactscout <- read_sheet(sheet_id, sheet = "bactscout")
 df_gambit <- read_sheet(sheet_id, sheet = "gambit")
 df_checkm2 <- read_sheet(sheet_id, sheet = "checkm2")
 df_assembly <- read_sheet(sheet_id, sheet = "assembly-scan")
-df_mlst <- read_sheet(sheet_id, sheet = "mlst")
+#df_mlst <- read_sheet(sheet_id, sheet = "mlst")
+df_mlst <- read_sheet(sheet_id, sheet = "mlst_new")
 df_amrfinderplus <- read_sheet(sheet_id, sheet = "amrfinderplus")
 
 
