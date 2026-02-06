@@ -1182,7 +1182,7 @@ for(i in mlst_df_list) {
     kable_styling(latex_options = c("hold_position","scale_down"), position = "left") %>%
     row_spec(0, background = "#D4D4D4",bold = TRUE)%>%
     column_spec(1, width = "3cm") %>%
-    column_spec(2, width = "3cm", italic = TRUE) %>%
+    column_spec(2, width = "4cm", italic = TRUE) %>%
     column_spec(3, width = "1cm") %>%
     column_spec(4, width = "2cm") %>%
     column_spec(5:col_num, width = "1cm") %>%
