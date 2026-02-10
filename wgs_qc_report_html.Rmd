@@ -743,14 +743,60 @@ $\\$
 ```{r assembly-qc, echo = FALSE, warning = FALSE, message = FALSE}
 assembly_qc <- merge(wgs_df, arsrl_id_df, by = "sample_id")
 
+
+# Check if wgs_id is genus only
+assembly_qc$with_species<- str_detect(assembly_qc$wgs_id, " ") 
+
+
+# Filter df with genus only
+genus_df <- assembly_qc %>%
+  filter(with_species == FALSE)
+
+
 # --- Read samplesheet ---
 qualibact_data <- read_csv("data_files/qualibact_filtered_metrics.csv") %>%
   mutate(species = gsub("_", " ", species))
 
-# --- Prepare reference table: only species present in assembly_qc ---
-qualibact_ref <- qualibact_data %>%
-  filter(species %in% assembly_qc$wgs_id) %>%
-  mutate(metric_clean = str_to_lower(metric))
+
+if (nrow(genus_df) != 0) {
+  # Create the regex pattern
+  wgs_pattern <- paste(genus_df$wgs_id, collapse = "|")
+  
+  qualibact_partial <- qualibact_data %>%
+    # Use the column name directly
+    filter(grepl(wgs_pattern, species)) %>% 
+    mutate(metric_clean = str_to_lower(metric))
+  
+  result_qualibact <- qualibact_partial %>%
+    mutate(species = sub(" .*", "", species)) %>%
+    group_by(species, metric_clean) %>%
+    summarize(
+      lower_bounds = min(lower_bounds, na.rm = TRUE),
+      upper_bounds = max(upper_bounds, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # --- Prepare reference table: only species present in assembly_qc ---
+  qualibact_ref <- qualibact_data %>%
+    filter(species %in% assembly_qc$wgs_id) %>%
+    mutate(metric_clean = str_to_lower(metric)) %>%
+    select(-metric) %>%
+    relocate(metric_clean, .after = "species")
+  
+  
+  qualibact_ref <- rbind(qualibact_ref, result_qualibact)
+  
+  # -- Replace -Inf in dataframe with NA --
+  qualibact_ref[sapply(qualibact_ref, is.infinite)] <- NA
+  
+} else {
+  # --- Prepare reference table: only species present in assembly_qc ---
+  qualibact_ref <- qualibact_data %>%
+    filter(species %in% assembly_qc$wgs_id) %>%
+    mutate(metric_clean = str_to_lower(metric))
+
+}
+
 
 
 # --- Map qualibact metrics to assembly_qc column names ---

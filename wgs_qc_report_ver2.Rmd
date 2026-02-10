@@ -644,14 +644,60 @@ reco_table <- reco_df %>%
 ```{r assembly-qc, echo = FALSE, warning = FALSE, message = FALSE}
 assembly_qc <- merge(wgs_df, arsrl_id_df, by = "sample_id")
 
+
+# Check if wgs_id is genus only
+assembly_qc$with_species<- str_detect(assembly_qc$wgs_id, " ") 
+
+
+# Filter df with genus only
+genus_df <- assembly_qc %>%
+  filter(with_species == FALSE)
+
+
 # --- Read samplesheet ---
 qualibact_data <- read_csv("data_files/qualibact_filtered_metrics.csv") %>%
   mutate(species = gsub("_", " ", species))
 
-# --- Prepare reference table: only species present in assembly_qc ---
-qualibact_ref <- qualibact_data %>%
-  filter(species %in% assembly_qc$wgs_id) %>%
-  mutate(metric_clean = str_to_lower(metric))
+
+if (nrow(genus_df) != 0) {
+  # Create the regex pattern
+  wgs_pattern <- paste(genus_df$wgs_id, collapse = "|")
+  
+  qualibact_partial <- qualibact_data %>%
+    # Use the column name directly
+    filter(grepl(wgs_pattern, species)) %>% 
+    mutate(metric_clean = str_to_lower(metric))
+  
+  result_qualibact <- qualibact_partial %>%
+    mutate(species = sub(" .*", "", species)) %>%
+    group_by(species, metric_clean) %>%
+    summarize(
+      lower_bounds = min(lower_bounds, na.rm = TRUE),
+      upper_bounds = max(upper_bounds, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # --- Prepare reference table: only species present in assembly_qc ---
+  qualibact_ref <- qualibact_data %>%
+    filter(species %in% assembly_qc$wgs_id) %>%
+    mutate(metric_clean = str_to_lower(metric)) %>%
+    select(-metric) %>%
+    relocate(metric_clean, .after = "species")
+  
+  
+  qualibact_ref <- rbind(qualibact_ref, result_qualibact)
+  
+  # -- Replace -Inf in dataframe with NA --
+  qualibact_ref[sapply(qualibact_ref, is.infinite)] <- NA
+  
+} else {
+  # --- Prepare reference table: only species present in assembly_qc ---
+  qualibact_ref <- qualibact_data %>%
+    filter(species %in% assembly_qc$wgs_id) %>%
+    mutate(metric_clean = str_to_lower(metric))
+
+}
+
 
 
 # --- Map qualibact metrics to assembly_qc column names ---
@@ -903,7 +949,7 @@ assembly_reco_table <- assembly_reco_df %>%
     latex_options = c("striped", "hold_position")
   ) %>%
   column_spec(1, width = "6cm") %>%
-  column_spec(2, width = "6cm") %>%
+  column_spec(2, width = "10cm") %>%
   row_spec(0, background = "#D4D4D4", bold = TRUE) %>%
   add_header_above(c("Summary of Assembly Reads with FAILED QC results" = 2), align = "l", bold = TRUE)
 
@@ -1004,10 +1050,22 @@ raw_reads_summary <- raw_reads_summary %>%
     batch_code = batch_code,
     sample_id = sub("(.*)_[^_]*$", "\\1", sample_id)
     ) %>%
-  relocate(batch_code, .before = sample_id)
+  relocate(batch_code, .before = sample_id) %>%
+  rename(raw_failed_conditions = failed_conditions)
 
 
 overall_result <- merge(raw_reads_summary, assembly_qc_summary, by ="sample_id")
+
+
+# --- Get assembly result failed condition --
+failed_assembly <- assembly_qc_checked %>%
+  select(sample_id, failed_conditions) %>%
+  mutate(sample_id = sub("(.*)_[^_]*$", "\\1", sample_id)) %>%
+  rename(assembly_failed_conditions = failed_conditions)
+
+
+# -- Merge --
+overall_result <- merge(overall_result, failed_assembly, by ="sample_id")
 
 
 overall_result <- overall_result %>%
@@ -1018,12 +1076,17 @@ overall_result <- overall_result %>%
     .default = ""
   )) %>%
   relocate(wgs_id, .before = species_abundance) %>%
-  relocate(final_result, .after = wgs_id)
+  relocate(final_result, .after = wgs_id) %>%
+  select(-iso_num)
   
-#sheet_write(data = overall_result, ss = sheet_id, sheet = "result")
+sheet_write(data = overall_result, ss = sheet_id, sheet = "result")
 
 # append googlesheet "result" tab
-sheet_append(ss = sheet_id, sheet = "result", data = overall_result)
+#sheet_append(ss = sheet_id, sheet = "result", data = overall_result)
+
+
+write.table(as.matrix(overall_result), paste0("data_files/final_qc_result_",batch_name_clean,".csv"), sep = ",", row.names = FALSE)
+
 ```
 
 
