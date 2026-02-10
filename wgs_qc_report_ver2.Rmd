@@ -1085,7 +1085,7 @@ sheet_write(data = overall_result, ss = sheet_id, sheet = "result")
 #sheet_append(ss = sheet_id, sheet = "result", data = overall_result)
 
 
-write.table(as.matrix(overall_result), paste0("data_files/final_qc_result_",batch_name_clean,".csv"), sep = ",", row.names = FALSE)
+write.table(as.matrix(overall_result), paste0("data_files/ARSRL_WGS_QC_report_",batch_code,".csv"), sep = ",", row.names = FALSE)
 
 ```
 
